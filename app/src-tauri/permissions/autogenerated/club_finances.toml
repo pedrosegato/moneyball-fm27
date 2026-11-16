@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-club-finances"
+description = "Enables the club_finances command without any pre-configured scope."
+commands.allow = ["club_finances"]
+
+[[permission]]
+identifier = "deny-club-finances"
+description = "Denies the club_finances command without any pre-configured scope."
+commands.deny = ["club_finances"]

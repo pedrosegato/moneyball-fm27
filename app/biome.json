@@ -1,0 +1,96 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "files": {
+    "includes": [
+      "src/**",
+      "e2e/**",
+      "vite-plugins/**",
+      "*.ts",
+      "*.json",
+      "!**/node_modules",
+      "!**/dist",
+      "!src-tauri",
+      "!test-results",
+      "!playwright-report",
+      "!package-lock.json",
+      "!**/.vitest"
+    ]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 120
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "double",
+      "semicolons": "always",
+      "trailingCommas": "all",
+      "arrowParentheses": "always"
+    }
+  },
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
+    },
+    "formatter": {
+      "enabled": true
+    }
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "preset": "recommended",
+      "style": {
+        "noEnum": "error"
+      }
+    }
+  },
+  "assist": {
+    "enabled": true,
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
+  },
+  "overrides": [
+    {
+      "includes": ["src/engine/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "i18next": "The engine runs in a Web Worker: return codes and let the UI translate them.",
+                  "react-i18next": "The engine runs in a Web Worker: return codes and let the UI translate them.",
+                  "@/i18n": "The engine runs in a Web Worker: return codes and let the UI translate them."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "**/*.test.ts",
+        "**/*.test.tsx",
+        "e2e/**",
+        "**/*.bench.ts",
+        "src/**/testing/**",
+        "src/**/fixtures.ts"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noNonNullAssertion": "off"
+          }
+        }
+      }
+    }
+  ]
+}

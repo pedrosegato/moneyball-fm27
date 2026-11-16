@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-my-clubs"
+description = "Enables the my_clubs command without any pre-configured scope."
+commands.allow = ["my_clubs"]
+
+[[permission]]
+identifier = "deny-my-clubs"
+description = "Denies the my_clubs command without any pre-configured scope."
+commands.deny = ["my_clubs"]
