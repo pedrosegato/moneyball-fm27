@@ -8,6 +8,7 @@ import type { ColumnFiltering, HeaderMenuActions } from "@/filters/lib/headerMen
 import type { HeaderMenuHandle } from "@/filters/lib/headerMenuHandle";
 import { cn } from "@/lib/utils";
 import type { ValueMode } from "@/store/ui";
+import { useAnalyzing } from "@/store/useData";
 import type { TableColumn } from "../columns/types";
 import { useColumnWindow } from "../hooks/useColumnWindow";
 import { useHeaderKeys } from "../hooks/useHeaderKeys";
@@ -67,6 +68,7 @@ export function TableBody({
   empty,
 }: TableBodyProps) {
   const { t } = useTranslation("table");
+  const analyzing = useAnalyzing();
   const scrollerRef = useRef<HTMLDivElement>(null);
   const bodyRef = useRef<HTMLTableSectionElement>(null);
 
@@ -117,7 +119,12 @@ export function TableBody({
       <div className="relative flex min-h-0 flex-1 flex-col">
         <div
           ref={scrollerRef}
-          className={cn("relative min-h-0 flex-1 overflow-auto overscroll-contain", selected.size > 0 && "pb-16")}
+          aria-busy={analyzing}
+          className={cn(
+            "relative min-h-0 flex-1 overflow-auto overscroll-contain transition-opacity duration-(--duration-quick)",
+            selected.size > 0 && "pb-16",
+            analyzing && "opacity-60 delay-150",
+          )}
         >
           <table
             ref={tableRef}

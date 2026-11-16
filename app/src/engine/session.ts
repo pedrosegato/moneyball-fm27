@@ -25,7 +25,7 @@ export type EngineResponse =
       ok: true;
       snapshotId: number;
       snapshot?: SnapshotAnalysis;
-      analysis: DisplayAnalysis & ScoreAnalysis & RoleAnalysis & SquadRoleAnalysis;
+      analysis: DisplayAnalysis & ScoreAnalysis & RoleAnalysis & SquadRoleAnalysis & { period: Period };
     }
   | { id: number; type: "filter"; ok: true; mask: Uint8Array }
   | { id: number; type: EngineRequest["type"]; ok: false; error: string; loaded: number | null };
@@ -55,13 +55,44 @@ interface Loaded {
   delivered: boolean;
 }
 
+interface Cached<T> {
+  key: string;
+  analysis: T;
+}
+
+interface PeriodWork {
+  prepared: PreparedSnapshot;
+  display: Cached<DisplayAnalysis> | null;
+  model: Cached<ModelAnalysis> | null;
+  scores: Cached<ScoreAnalysis> | null;
+  squad: Cached<SquadRoleAnalysis> | null;
+}
+
+const KEPT_PERIODS = 2;
+
 export function createEngineSession(): EngineSession {
   let loaded: Loaded | null = null;
-  let display: { key: string; analysis: DisplayAnalysis } | null = null;
-  let model: { key: string; analysis: ModelAnalysis } | null = null;
-  let scores: { key: string; analysis: ScoreAnalysis } | null = null;
-  let squad: { key: string; analysis: SquadRoleAnalysis } | null = null;
+  let display: Cached<DisplayAnalysis> | null = null;
+  let model: Cached<ModelAnalysis> | null = null;
+  let scores: Cached<ScoreAnalysis> | null = null;
+  let squad: Cached<SquadRoleAnalysis> | null = null;
   let columns: Columns | null = null;
+  const kept = new Map<Period, PeriodWork>();
+
+  function switchPeriod(held: Loaded, period: Period) {
+    kept.set(held.period, { prepared: held.prepared, display, model, scores, squad });
+    const back = kept.get(period);
+    kept.delete(period);
+    while (kept.size > KEPT_PERIODS) kept.delete(kept.keys().next().value as Period);
+    held.prepared = back?.prepared ?? prepareSnapshot(applyPeriod(held.snapshot, period));
+    display = back?.display ?? null;
+    model = back?.model ?? null;
+    scores = back?.scores ?? null;
+    squad = back?.squad ?? null;
+    columns = null;
+    held.period = period;
+    held.delivered = false;
+  }
 
   function holding(snapshotId: number): Loaded {
     if (loaded?.id !== snapshotId) throw new Error(`snapshot ${snapshotId} is not loaded`);
@@ -72,16 +103,12 @@ export function createEngineSession(): EngineSession {
     const period = input.period ?? CURRENT_SEASON;
     if (snapshot) {
       loaded = display = model = scores = squad = columns = null;
+      kept.clear();
       const prepared = prepareSnapshot(applyPeriod(snapshot, period));
       loaded = { id: snapshotId, snapshot, period, prepared, delivered: false };
     }
     const held = holding(snapshotId);
-    if (held.period !== period) {
-      display = model = scores = squad = columns = null;
-      held.prepared = prepareSnapshot(applyPeriod(held.snapshot, period));
-      held.period = period;
-      held.delivered = false;
-    }
+    if (held.period !== period) switchPeriod(held, period);
     const { prepared } = held;
     const { poolMinutes, leagueAdjustment } = input.settings;
     const { composites, myClubUid } = input;
@@ -122,6 +149,7 @@ export function createEngineSession(): EngineSession {
       ...nextScores.analysis,
       ...viewRoles(prepared.records, prepared.groups, nextModel.analysis.roles, input.role ?? null),
       ...nextSquad.analysis,
+      period,
     };
     [display, model, scores, squad, columns] = [
       nextDisplay,

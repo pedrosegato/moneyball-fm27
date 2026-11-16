@@ -7,6 +7,7 @@ import { type DataState, noMasks } from "./data";
 import { type Masks, maskOf, masksOf } from "./filterMasks";
 import { FILTER_TABLES, type FilterTable, perFilterTable, usableFilters } from "./filters";
 import type { AppStore } from "./index";
+import { periodSnapshot } from "./periodSnapshot";
 
 export interface AnalysisRunnerDeps {
   store: AppStore;
@@ -79,6 +80,12 @@ export function createAnalysisRunner({
     setData({ visible: { ...state().data.visible, [table]: visible } });
   }
 
+  function preparePeriod(snapshot: Snapshot) {
+    const { ui, data } = state();
+    if (!data.analysis || data.analysis.period === ui.period) return;
+    void afterPaint().then(() => periodSnapshot(snapshot, ui.period));
+  }
+
   function fail(error: unknown) {
     const wasLoading = pending !== null;
     pending = null;
@@ -103,13 +110,15 @@ export function createAnalysisRunner({
       engine ??= createEngine();
       const client = engine;
       try {
-        const result = await client.analyze(analysisInput(state(), snapshot));
-        const asked = state().filters;
+        const asked = client.analyze(analysisInput(state(), snapshot));
+        preparePeriod(snapshot);
+        const result = await asked;
+        const filters = state().filters;
         for (const table of FILTER_TABLES) ++filterTickets[table];
         const players = snapshot.players.length;
-        const masks = await masksOf(client, players, asked, Object.keys(result.composites), FILTER_TABLES);
+        const masks = await masksOf(client, players, filters, Object.keys(result.composites), FILTER_TABLES);
         apply(client, snapshot, result, masks);
-        for (const table of FILTER_TABLES) if (state().filters[table] !== asked[table]) void refilter(table);
+        for (const table of FILTER_TABLES) if (state().filters[table] !== filters[table]) void refilter(table);
         retried = false;
       } catch (e) {
         if (e instanceof SupersededError || client !== engine || !isRunning()) return;

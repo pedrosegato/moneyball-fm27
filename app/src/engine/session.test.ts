@@ -273,3 +273,26 @@ describe("engine session", () => {
     expect(list(mask).slice(0, 2)).toEqual([0, 1]);
   });
 });
+
+describe("period switches", () => {
+  it("keeps recent periods, so switching back skips the preparation and still sends the snapshot part and the period", () => {
+    const session = createEngineSession();
+    const run = (period: string, withSnapshot = false) =>
+      analyzed(
+        session.handle(
+          analyze({ input: { ...input, period } as AnalysisRequest, snapshot: withSnapshot ? snapshot : undefined }),
+        ).response,
+      );
+    const first = run("season", true);
+    expect(first.analysis.period).toBe("season");
+    const games = run("games:30");
+    expect(games.analysis.period).toBe("games:30");
+    expect(games.snapshot).toBeDefined();
+    vi.mocked(deriveAll).mockClear();
+    const back = run("season");
+    expect(deriveAll).not.toHaveBeenCalled();
+    expect(back.analysis.period).toBe("season");
+    expect(back.snapshot).toBeDefined();
+    expect(back.analysis.pct).toEqual(first.analysis.pct);
+  });
+});

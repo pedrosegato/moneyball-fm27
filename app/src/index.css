@@ -264,6 +264,50 @@
   }
 }
 
+[data-busy-bar] {
+  animation:
+    appear-late var(--duration-quick) var(--ease-out) 150ms both,
+    busy-sweep 1.1s linear infinite;
+}
+@keyframes busy-sweep {
+  from {
+    translate: -100% 0;
+  }
+  to {
+    translate: 400% 0;
+  }
+}
+
+[data-busy-spin] {
+  animation:
+    appear-late var(--duration-quick) var(--ease-out) 150ms both,
+    busy-turn 0.8s linear infinite;
+}
+@keyframes busy-turn {
+  to {
+    rotate: 360deg;
+  }
+}
+
+[data-busy-hide] {
+  animation: busy-hide var(--duration-quick) var(--ease-out) 150ms both;
+}
+@keyframes busy-hide {
+  to {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-busy-bar] {
+    width: 100%;
+    animation: appear-late var(--duration-quick) var(--ease-out) 150ms both;
+  }
+  [data-busy-spin] {
+    animation: appear-late var(--duration-quick) var(--ease-out) 150ms both;
+  }
+}
+
 @utility row-fill {
   background: linear-gradient(var(--row-tint), var(--row-tint)) var(--row-base);
 }

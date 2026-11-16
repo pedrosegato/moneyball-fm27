@@ -14,6 +14,7 @@ import { ColumnsMenu } from "./ColumnsMenu";
 import { PlayerCount } from "./PlayerCount";
 import { PlayerSearch } from "./PlayerSearch";
 import { RolePicker } from "./RolePicker";
+import { TableBusyBar } from "./TableBusyBar";
 
 interface TableToolbarProps {
   searchKey: SearchKey;
@@ -53,7 +54,7 @@ export function TableToolbar({
 }: TableToolbarProps) {
   const { t } = useTranslation("table");
   return (
-    <div className="shrink-0 border-b border-line-subtle">
+    <div className="relative shrink-0 border-b border-line-subtle">
       <fieldset aria-label={t("view.who")} className="flex min-h-11 items-start gap-3 px-4 py-1.5">
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1">
           <PlayerSearch searchKey={searchKey} />
@@ -78,6 +79,7 @@ export function TableToolbar({
           </Button>
         </div>
       </fieldset>
+      <TableBusyBar />
     </div>
   );
 }

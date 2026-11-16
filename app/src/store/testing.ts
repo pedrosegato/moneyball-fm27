@@ -3,6 +3,7 @@ import type { DataSource } from "@/data/source";
 import type { GameStatus, Snapshot } from "@/data/types";
 import type { AnalysisInput } from "@/engine/analysis/input";
 import { createEngineClient, type EngineClient, type SequencedAnalysis } from "@/engine/client";
+import { CURRENT_SEASON } from "@/engine/period";
 import { createEngineSession, type EngineResponse } from "@/engine/session";
 import { playerRecord, snapshotOf } from "@/engine/testing/records";
 import type { FilterSpec } from "@/engine/universe";
@@ -69,7 +70,7 @@ export function fakeEngine() {
       new Promise((resolve, reject) => {
         const s = ++seq;
         const result = (extra: Partial<SequencedAnalysis>) =>
-          ({ seq: s, composites: {}, ...extra }) as SequencedAnalysis;
+          ({ seq: s, composites: {}, period: input.period ?? CURRENT_SEASON, ...extra }) as SequencedAnalysis;
         calls.push({ input, seq: s, resolve: (extra = {}) => resolve(result(extra)), reject });
       }),
     filter: (list) => new Promise((resolve, reject) => filters.push({ filters: list, resolve, reject })),

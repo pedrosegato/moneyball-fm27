@@ -6,9 +6,13 @@ import { type RoleAnalysis, viewRoles } from "./analysis/roles";
 import { type ScoreAnalysis, scorePlayers } from "./analysis/score";
 import { type SquadRoleAnalysis, squadRoles } from "./analysis/squadRoles";
 import { poolFlags } from "./club";
-import { applyPeriod, CURRENT_SEASON } from "./period";
+import { applyPeriod, CURRENT_SEASON, type Period } from "./period";
 
-export type AnalysisResult = SnapshotAnalysis & DisplayAnalysis & ScoreAnalysis & RoleAnalysis & SquadRoleAnalysis;
+export type AnalysisResult = SnapshotAnalysis &
+  DisplayAnalysis &
+  ScoreAnalysis &
+  RoleAnalysis &
+  SquadRoleAnalysis & { period: Period };
 
 export function runAnalysis({
   snapshot,
@@ -27,5 +31,6 @@ export function runAnalysis({
     ...scorePlayers(prepared, model, scoring),
     ...viewRoles(prepared.records, prepared.groups, model.roles, role),
     squadRoles: squadRoles(prepared.records, model.roles, scoring.myClubUid, poolFlags(prepared.records, poolMinutes)),
+    period,
   };
 }
