@@ -1,5 +1,5 @@
 import { Scout } from "@/pages/Scout";
-import { Cart, Compare, Elenco, Graphs, Rank, Settings } from "./pages";
+import { Cart, Compare, Elenco, Graphs, Settings } from "./pages";
 import type { Route } from "./Router";
 import { PAGE } from "./routeIds";
 
@@ -13,8 +13,6 @@ export function PageFor({ route }: { route: Route }) {
       return <Graphs />;
     case PAGE.elenco:
       return <Elenco />;
-    case PAGE.rank:
-      return <Rank />;
     case PAGE.cart:
       return <Cart />;
     case PAGE.config:

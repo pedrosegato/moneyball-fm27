@@ -28,7 +28,6 @@ export const common = {
     carrinho: "Carrinho",
     comparar: "Comparar",
     graficos: "Gráficos",
-    rank: "Rank",
     config: "Configurações",
     shortlist: "Shortlist",
   },

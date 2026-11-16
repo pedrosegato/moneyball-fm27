@@ -28,14 +28,14 @@ describe("parseRoute", () => {
   });
 
   it("opens Scout when the hash names no page it knows", () => {
-    for (const hash of ["", "#", "#/", "#/nada", "#/scout/nada", "#/elenco/x", "#/constructor"]) {
+    for (const hash of ["", "#", "#/", "#/nada", "#/scout/nada", "#/elenco/x", "#/constructor", "#/rank"]) {
       expect(parseRoute(hash), hash).toEqual(hash === "#/elenco/x" ? { page: "elenco" } : { page: "scout" });
     }
   });
 
   it("writes hrefs parseRoute reads back", () => {
     for (const route of [
-      { page: "rank" },
+      { page: "graficos" },
       { page: "scout" },
       { page: "config" },
       { page: "config", section: "compostas" },
@@ -66,7 +66,6 @@ describe("Shell routing", () => {
       ["#/carrinho", "Carrinho"],
       ["#/comparar", "Comparar"],
       ["#/graficos", "Gráficos"],
-      ["#/rank", "Rank"],
       ["#/config", "Configurações"],
     ];
     for (const [hash, title] of pages) {
@@ -97,8 +96,8 @@ describe("Shell routing", () => {
   it("marks the page shown as the current one in the sidebar", () => {
     const { controller } = startData();
     renderWithData(<Shell />, controller);
-    goTo("#/rank");
-    expect(screen.getByRole("link", { name: "Rank" })).toHaveAttribute("aria-current", "page");
+    goTo("#/graficos");
+    expect(screen.getByRole("link", { name: "Gráficos" })).toHaveAttribute("aria-current", "page");
     expect(screen.getByRole("link", { name: "Elenco" })).not.toHaveAttribute("aria-current");
   });
 });

@@ -5,7 +5,7 @@ const normalize = (name: string | null | undefined): string => (name ?? "").trim
 const ALIAS = new Map(Object.entries(LALIAS).map(([from, to]) => [normalize(from), normalize(to)]));
 
 const RANK = new Map<string, number>();
-LEAGUES.forEach(([name], i) => {
+LEAGUES.forEach((name, i) => {
   const key = normalize(name);
   if (!RANK.has(key)) RANK.set(key, i);
 });
@@ -25,11 +25,6 @@ export function leagueKey(division: string | null | undefined): string {
 
 export function leagueRank(key: string): number | undefined {
   return RANK.get(key);
-}
-
-export function defaultLeagueWeight(key: string): number {
-  const rank = RANK.get(key);
-  return rank === undefined ? 1 : LEAGUES[rank][2];
 }
 
 export type LeagueFilter =

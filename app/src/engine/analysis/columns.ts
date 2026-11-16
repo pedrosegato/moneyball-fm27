@@ -13,13 +13,13 @@ export function analysisColumns(
   prepared: PreparedSnapshot,
   analysis: DisplayAnalysis & ScoreAnalysis & RoleAnalysis,
 ): Columns {
-  const { rolePerf, fair, rank, abilityPct, valueRatio, statsVsAbility, pool } = analysis;
+  const { rolePerf, fair, abilityPct, valueRatio, statsVsAbility, pool } = analysis;
   const columns = withNumbers(prepared.columns, {
     ...percentilesOf(analysis.pct),
     ...analysis.composites,
     ...percentilesOf(analysis.compositePct),
     [RATING_PERCENTILE]: analysis.ratingPct,
-    ...({ perf: rolePerf, fair, rank, abilityPct, valueRatio, statsVsAbility } satisfies Record<
+    ...({ perf: rolePerf, fair, abilityPct, valueRatio, statsVsAbility } satisfies Record<
       (typeof SCORE_COLUMNS)[number],
       ArrayLike<number>
     >),

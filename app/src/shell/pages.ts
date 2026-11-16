@@ -32,19 +32,17 @@ const loaders = [
   () => import("@/pages/Cart"),
   () => import("@/pages/Compare"),
   () => import("@/pages/Graphs"),
-  () => import("@/pages/Rank"),
   () => import("@/pages/Settings"),
 ] as const;
-const [elenco, cart, compare, graphs, rank, settings] = loaders;
+const [elenco, cart, compare, graphs, settings] = loaders;
 
 export const Elenco = lazyPage(() => elenco().then((m) => m.Elenco));
 export const Cart = lazyPage(() => cart().then((m) => m.Cart));
 export const Compare = lazyPage(() => compare().then((m) => m.Compare));
 export const Graphs = lazyPage(() => graphs().then((m) => m.Graphs));
-export const Rank = lazyPage(() => rank().then((m) => m.Rank));
 export const Settings = lazyPage(() => settings().then((m) => m.Settings));
 
-const lazyPages: readonly LazyPage<never>[] = [Elenco, Cart, Compare, Graphs, Rank, Settings];
+const lazyPages: readonly LazyPage<never>[] = [Elenco, Cart, Compare, Graphs, Settings];
 
 export function retryFailedPages(): void {
   for (const page of lazyPages) page.retry();

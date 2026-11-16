@@ -4,7 +4,6 @@ export const PAGE = {
   cart: "carrinho",
   compare: "comparar",
   graphs: "graficos",
-  rank: "rank",
   config: "config",
 } as const;
 export type PageId = (typeof PAGE)[keyof typeof PAGE];

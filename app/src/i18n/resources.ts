@@ -7,7 +7,6 @@ import { filters } from "./pt-BR/filters";
 import { graphs } from "./pt-BR/graphs";
 import { player } from "./pt-BR/player";
 import { positions } from "./pt-BR/positions";
-import { rank } from "./pt-BR/rank";
 import { roles } from "./pt-BR/roles";
 import { scout } from "./pt-BR/scout";
 import { settings } from "./pt-BR/settings";
@@ -27,7 +26,6 @@ export const resources = {
     compare,
     graphs,
     scout,
-    rank,
     stats,
     roles,
     positions,

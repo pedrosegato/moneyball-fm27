@@ -33,7 +33,6 @@ export interface GoldenPlayer {
   perf: Num;
   perfBy: Num[];
   fair: Num;
-  rank: null | { base: number; weight: number; weighted: number; pos: number; posWeighted: number };
   ability: { best: Num; vsAge: Num; by: Record<string, Num> };
 }
 

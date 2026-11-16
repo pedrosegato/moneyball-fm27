@@ -24,7 +24,6 @@ export const SEARCH_KEY = {
   scout: "scout",
   squad: "elenco",
   signings: "contratacoes",
-  rank: "rank",
   shortlist: "shortlist",
   cart: "carrinho",
 } as const;

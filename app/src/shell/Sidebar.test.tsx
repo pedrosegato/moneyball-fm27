@@ -32,7 +32,7 @@ describe("Sidebar", () => {
       within(nav())
         .getAllByRole("link")
         .map((a) => a.textContent),
-    ).toEqual(["Scout", "Elenco", "Shortlist", "Comparar", "Gráficos", "Rank"]);
+    ).toEqual(["Scout", "Elenco", "Shortlist", "Comparar", "Gráficos"]);
     expect(screen.getByRole("link", { name: "Configurações" })).toHaveAttribute("href", "#/config");
   });
 
@@ -101,7 +101,7 @@ describe("Sidebar", () => {
       within(nav())
         .getAllByRole("link")
         .map((a) => a.textContent),
-    ).toEqual(["Scout", "Elenco", "Shortlist", "Comparar", "Gráficos", "Rank"]);
+    ).toEqual(["Scout", "Elenco", "Shortlist", "Comparar", "Gráficos"]);
     expect(screen.queryByRole("region", { name: "Verba da janela" })).toBeNull();
 
     await userEvent.hover(screen.getByRole("link", { name: "Elenco" }));

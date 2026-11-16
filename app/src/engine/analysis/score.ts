@@ -5,7 +5,6 @@ import { STYLE_STATS } from "../data/groups";
 import { fairValues, fitValueModel } from "../fairValue";
 import { moneyballList } from "../moneyball";
 import { type PosGroup, slotGroup } from "../positions";
-import { rankScores } from "../rank";
 import { isRoleId, roleIndex } from "../roles/catalog";
 import { contractedSquad, sellKeep, type Verdict } from "../sellKeep";
 import { type FitRow, fitContext, type Lineup, pickLineup, tacticalFit } from "../tacticalFit";
@@ -26,7 +25,6 @@ export interface ScoreAnalysis {
   lineup: Lineup;
   fit: FitRow[][];
   sellKeep: Record<number, Verdict>;
-  rank: Float64Array;
 }
 
 export type ScoreInput = Pick<AnalysisInput, "myClubUid" | "settings" | "lineup">;
@@ -69,8 +67,6 @@ export function scorePlayers(
     );
   }
 
-  const rank = rankScores(records, prepared.result.rating, settings.leagueWeights);
-  for (let i = 0; i < rank.length; i++) if (!pool[i]) rank[i] = NaN;
   const abilityPct = abilityPercentiles(prepared.result.ability, ranked);
 
   return {
@@ -84,7 +80,6 @@ export function scorePlayers(
     lineup: xi,
     fit,
     sellKeep: Object.fromEntries(verdicts),
-    rank,
     valueRatio: Float64Array.from(records, (r, i) => fair[i] / marketValue(r)),
     statsVsAbility: Float32Array.from(perf, (p, i) => p - abilityPct[i]),
   };

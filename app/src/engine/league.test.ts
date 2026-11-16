@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { LALIAS, LEAGUES } from "./data/leagues";
-import { defaultLeagueWeight, leagueKey, leagueMatcher, leagueRank, TOP5_LEAGUES } from "./league";
+import { leagueKey, leagueMatcher, leagueRank, TOP5_LEAGUES } from "./league";
 
 describe("league data", () => {
   it("keeps the old ranking table and aliases whole", () => {
     expect(LEAGUES).toHaveLength(500);
-    expect(LEAGUES[0]).toEqual(["Premier League", "England", 1.15]);
-    expect(LEAGUES.at(-1)).toEqual(["Austrian Level 6", "Austria", 1]);
+    expect(LEAGUES[0]).toBe("Premier League");
+    expect(LEAGUES.at(-1)).toBe("Austrian Level 6");
     expect(Object.keys(LALIAS)).toHaveLength(147);
     expect(LALIAS["Albanian Superleague"]).toBe("Abissnet Superiore");
   });
@@ -23,21 +23,19 @@ describe("leagueKey", () => {
   });
 });
 
-describe("leagueRank / defaultLeagueWeight", () => {
-  it("ranks by the table order and weighs by its third column", () => {
+describe("leagueRank", () => {
+  it("ranks by the table order", () => {
     expect(leagueRank("premier league")).toBe(0);
-    expect(defaultLeagueWeight("premier league")).toBe(1.15);
-    expect(defaultLeagueWeight(leagueKey("Brasileirão Assaí Série A"))).toBe(1.105);
+    expect(leagueRank(leagueKey("Brasileirão Assaí Série A"))).toBe(6);
   });
 
-  it("gives a league outside the table no rank and weight 1", () => {
+  it("gives a league outside the table no rank", () => {
     expect(leagueRank("nowhere league")).toBeUndefined();
-    expect(defaultLeagueWeight("nowhere league")).toBe(1);
   });
 
   it("keeps the first of a name listed twice", () => {
     const seen = new Map<string, number>();
-    LEAGUES.forEach(([name], i) => {
+    LEAGUES.forEach((name, i) => {
       const k = name.trim().toLowerCase();
       if (!seen.has(k)) seen.set(k, i);
     });

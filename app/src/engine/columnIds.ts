@@ -19,7 +19,6 @@ export const COLUMN = {
   leagueStrength: "leagueStrength",
   perf: "perf",
   fair: "fair",
-  rank: "rank",
   abilityPct: "abilityPct",
   valueRatio: "valueRatio",
   statsVsAbility: "statsVsAbility",
@@ -39,7 +38,6 @@ export const RATING_PERCENTILE = percentileColumn(COLUMN.rating);
 export const SCORE_COLUMNS = [
   COLUMN.perf,
   COLUMN.fair,
-  COLUMN.rank,
   COLUMN.abilityPct,
   COLUMN.valueRatio,
   COLUMN.statsVsAbility,

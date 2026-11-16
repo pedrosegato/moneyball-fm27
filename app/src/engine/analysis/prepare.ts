@@ -4,7 +4,7 @@ import { marketValue, monthsLeft, type SampleSizes, sampleSizes } from "../club"
 import type { SNAPSHOT_NUMBER_COLUMNS } from "../columnIds";
 import { type LeagueStrength, leagueStrengthIndex, leagueStrengths } from "../leagueStrength";
 import { POS_GROUPS, type PosGroup, positionSet } from "../positions";
-import { averageRating } from "../rank";
+import { averageRating } from "../rating";
 import { STAT_KEYS, STATS, type StatKey } from "../stats/catalog";
 import { deriveAll } from "../stats/derive";
 import { type Columns, mainGroups, playerColumns } from "../universe";
