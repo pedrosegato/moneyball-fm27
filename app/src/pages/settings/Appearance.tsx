@@ -19,7 +19,7 @@ export function Appearance() {
       title={t("appearance.title")}
       onRestore={theme !== fallback ? () => updateSettings({ theme: fallback }) : undefined}
     >
-      <Row label={t("appearance.theme")} description={t("appearance.themeHint")}>
+      <Row label={t("appearance.theme")}>
         <SegmentedControl
           aria-label={t("appearance.theme")}
           value={theme}

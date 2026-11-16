@@ -78,7 +78,7 @@ describe("PlayerSheet", () => {
     const strength = facts[labels.indexOf("Força da liga")];
     expect(strength.lastElementChild?.textContent).toMatch(/^\d+$/);
     expect(strength.getAttribute("title")).toMatch(
-      /^CA média dos titulares da liga \(450\+ min\), estimada pelo save; a da sua liga: \d+$/,
+      /^CA média dos titulares da liga \(450\+ min\); a da sua liga: \d+$/,
     );
   });
 
@@ -151,7 +151,7 @@ describe("PlayerSheet", () => {
     await openPanel(undefined, strikersOf({ name: "MFC", uid: MY_CLUB }));
     select(strikers[1].uid);
     const ficha = within(screen.getByRole("dialog", { name: strikers[1].name })).getByRole("list", { name: "Ficha" });
-    expect(within(ficha).queryByText(/sem o peso da liga/)).not.toBeInTheDocument();
+    expect(within(ficha).queryByText(/sem peso da liga/)).not.toBeInTheDocument();
     const perf = within(ficha).getByText("Perf.").parentElement!;
     expect(perf.querySelector('[data-slot="stat-cell"] [aria-hidden]')?.textContent).toMatch(/^\d+$/);
   });

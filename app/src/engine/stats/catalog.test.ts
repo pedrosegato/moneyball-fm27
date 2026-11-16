@@ -7,7 +7,7 @@ describe("stat catalog", () => {
     expect(missing).toEqual([]);
     for (const d of STATS) {
       expect(d.description.trim().replace(/\.$/, "")).not.toMatch(/\.\s/);
-      expect(d.description).toMatch(/melhor|mérito|trabalho/);
+      expect(d.description).toMatch(/melhor|trabalho|fáceis/);
     }
   });
 

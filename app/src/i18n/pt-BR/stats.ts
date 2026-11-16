@@ -126,10 +126,8 @@ export const stats = {
   description: {
     Gls: "total de gols marcados no período lido; quanto mais, melhor.",
     Ast: "total de assistências, o último passe antes de um gol; quanto mais, melhor.",
-    "G/90":
-      "gols marcados a cada 90 minutos em campo, o que deixa comparar quem jogou muito com quem jogou pouco; quanto mais, melhor.",
-    "npG/90":
-      "gols a cada 90 minutos sem contar pênaltis, que mostram melhor o faro de gol com a bola rolando; quanto mais, melhor.",
+    "G/90": "gols marcados a cada 90 minutos em campo; quanto mais, melhor.",
+    "npG/90": "gols a cada 90 minutos sem contar pênaltis; quanto mais, melhor.",
     "Ast/90": "assistências a cada 90 minutos em campo; quanto mais, melhor.",
     "GC/90":
       "gols mais assistências a cada 90 minutos: quanto o jogador participa direto dos gols do time; quanto mais, melhor.",
@@ -158,8 +156,7 @@ export const stats = {
       "gols esperados sem pênaltis a cada 90 minutos: mede a qualidade das chances que o jogador teve com a bola rolando; quanto mais, melhor.",
     "Shots/90": "chutes a gol a cada 90 minutos; quanto mais, melhor.",
     "SoT/90": "chutes no alvo, os que iriam para o gol, a cada 90 minutos; quanto mais, melhor.",
-    "ShOut/90":
-      "chutes de fora da área a cada 90 minutos: mostra quem arrisca de longe, e mais conta como melhor no percentil.",
+    "ShOut/90": "chutes de fora da área a cada 90 minutos; quanto mais, melhor.",
     "SoT%": "parte dos chutes que foram no alvo, em %: mede a pontaria; quanto mais, melhor.",
     "Conv%": "parte dos chutes que viraram gol, em %; quanto mais, melhor.",
     "npG/Shot": "gols sem pênalti divididos por todos os chutes; quanto mais, melhor.",
@@ -186,7 +183,7 @@ export const stats = {
     PasA: "total de passes tentados: o quanto o jogador participa da circulação da bola; quanto mais, melhor.",
     PasC: "total de passes certos; quanto mais, melhor.",
     "PsC/90": "passes certos a cada 90 minutos: o volume de passe do jogador; quanto mais, melhor.",
-    "Pas%": "acerto de passes, em %; quanto mais, melhor, embora quem arrisca passes difíceis acerte menos.",
+    "Pas%": "acerto de passes, em %; quanto mais, melhor.",
     "PrPass/90":
       "passes progressivos, os que levam a bola bem mais perto do gol adversário, a cada 90 minutos; quanto mais, melhor.",
     "PrPass%": "parte dos passes certos que foram progressivos, em %; quanto mais, melhor.",
@@ -238,19 +235,17 @@ export const stats = {
     "Conc/90": "gols sofridos a cada 90 minutos em campo; quanto menos, melhor.",
     "CS/90": "jogos sem sofrer gol a cada 90 minutos em campo; quanto mais, melhor.",
     Saves: "total de defesas; quanto mais, melhor.",
-    ShTA: "total de chutes no alvo que o goleiro enfrentou: mostra quanto trabalho ele teve, não se foi bem.",
-    "Saves/90":
-      "defesas a cada 90 minutos; quanto mais, melhor, embora dependa de quantos chutes a defesa deixa passar.",
+    ShTA: "total de chutes no alvo que o goleiro enfrentou: mostra quanto trabalho ele teve.",
+    "Saves/90": "defesas a cada 90 minutos; quanto mais, melhor.",
     "Svh/90": "defesas em que o goleiro segurou a bola, a cada 90 minutos; quanto mais, melhor.",
-    "Svp/90": "defesas em que o goleiro rebateu a bola, a cada 90 minutos; mais conta como melhor no percentil.",
+    "Svp/90": "defesas em que o goleiro rebateu a bola, a cada 90 minutos; quanto mais, melhor.",
     "Svt/90": "defesas em que o goleiro mandou a bola para fora, a cada 90 minutos; quanto mais, melhor.",
     "Sv%": "parte dos chutes no alvo que o goleiro defendeu, em %; quanto mais, melhor.",
-    "xSv%":
-      "o aproveitamento de defesas que um goleiro médio teria contra os mesmos chutes, em %: alto quando os chutes eram fáceis, então o mérito é defender acima dele.",
+    "xSv%": "o aproveitamento de defesas que um goleiro médio teria contra os mesmos chutes, em %; quanto mais, mais fáceis eram os chutes.",
     "Saves/Conc": "defesas para cada gol sofrido; quanto mais, melhor.",
     "xGP/90":
       "gols evitados a cada 90 minutos: os gols que os chutes enfrentados costumam render menos os que o goleiro sofreu; quanto mais, melhor.",
-    PenF: "total de pênaltis que o goleiro enfrentou: mostra quanto trabalho ele teve, não se foi bem.",
+    PenF: "total de pênaltis que o goleiro enfrentou: mostra quanto trabalho ele teve.",
     "PenSv%": "parte dos pênaltis enfrentados que o goleiro defendeu, em %; quanto mais, melhor.",
   } satisfies Record<keyof typeof label, string>,
   preset: {

@@ -144,7 +144,7 @@ describe("Performance with the league weight and league strength columns", () =>
     const strength = column<NumberColumn>("leagueStrength");
     expect(strength.value).toBe(analysis.leagueStrength);
     expect([strength.abbr, strength.group, strength.format(122.08)]).toEqual(["Força da liga", "identidade", "122"]);
-    expect(strength.label).toBe("Força da liga: CA média dos titulares (450+ min), estimada pelo save");
+    expect(strength.label).toBe("Força da liga: CA média dos titulares (450+ min)");
     const ids = columns.map((c) => c.id);
     expect(ids.indexOf("leagueStrength")).toBe(ids.indexOf("division") + 1);
   });

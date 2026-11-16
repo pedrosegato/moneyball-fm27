@@ -71,7 +71,7 @@ export const graphs = {
   labeled: {
     title: "Pontos rotulados",
     count: "Quantos rotular",
-    note: "Os melhores nos dois eixos juntos (pela soma dos z‑scores), com o nível de cada um.",
+    note: "Os melhores nos dois eixos juntos, com o nível de cada um.",
     levelTitle: "Percentil nos dois eixos juntos, entre os jogadores do gráfico",
     level: "Nível",
     name: "Nome",

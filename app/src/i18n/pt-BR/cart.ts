@@ -10,7 +10,7 @@ export const cart = {
   },
   aside: "Verba e vagas",
   noClub:
-    "O save não indicou o seu clube: a verba digitada fica guardada por clube, então não há onde guardá-la. Recarregue com o save do seu clube aberto.",
+    "O save não indicou o seu clube, e a verba fica guardada por clube. Recarregue com o save do seu clube aberto.",
   typedNote:
     "Digite o que o jogo mostra agora; fica salvo neste save. Contratação já feita sai da verba do jogo e deixa de contar aqui.",
   slots: {
@@ -118,7 +118,7 @@ export const cart = {
     actions: "Ações da pasta {{name}}",
     renameAction: "Renomear",
     delete: "Excluir",
-    lastFolder: "A última pasta fica: o botão Shortlist do painel guarda nela",
+    lastFolder: "A última pasta não pode ser excluída",
     create: "Nova pasta",
     deleteTitle: "Excluir a pasta {{name}}?",
     leaving_zero: "{{count, count}} jogadores saem desta pasta. Quem também está em outra pasta continua lá.",
@@ -133,15 +133,14 @@ export const cart = {
     leftSpoken: "Restante {{amount}}, {{pct}}% {{whole}}",
     fromGame: "Lido do jogo",
     hint: "Lido do jogo (não verificado): {{amount}}",
-    hintTitle:
-      "O leitor achou este valor no save, mas a leitura ainda não foi conferida com a tela de Finanças do jogo",
+    hintTitle: "Confira na tela de Finanças do FM antes de usar",
     use: "Usar",
     useLabel: "{{label}}, {{amount}}",
     typePlaceholder: "Digite",
     transfers: {
       title: "Transferências",
       whole: "da verba",
-      over: "As compras passam da verba em {{amount}}. Nada fica bloqueado: ajuste uma taxa, tire alguém ou venda mais.",
+      over: "As compras passam da verba em {{amount}}. Ajuste uma taxa, tire alguém ou venda mais.",
       budget: "Verba",
       budgetName: "Verba de transferências",
       use: "Usar a verba lida do jogo",
@@ -152,7 +151,7 @@ export const cart = {
       title: "Salários",
       whole: "do teto",
       unknown: "Folha atual ainda não lida",
-      over: "Os salários passam do teto em {{amount}} {{period}}. Nada fica bloqueado: negocie um salário menor ou libere outro.",
+      over: "Os salários passam do teto em {{amount}} {{period}}. Negocie um salário menor ou libere outro.",
       cap: "Teto {{period}}",
       capName: "Teto salarial {{period}}",
       use: "Usar o teto lido do jogo",

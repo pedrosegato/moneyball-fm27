@@ -31,7 +31,7 @@ describe("Sell/Keep in pt-BR", () => {
       [{ kind: "contract", months: 8 }, "Contrato acaba em 8 meses"],
       [{ kind: "overvalued", ratio: 2.44 }, "Vale 2,4× o valor justo da produção"],
       [{ kind: "undervalued", ratio: 0.456 }, "Vale 46% do valor justo da produção"],
-      [{ kind: "pastPeak", age: 31 }, "31 anos: o valor costuma cair daqui em diante"],
+      [{ kind: "pastPeak", age: 31 }, "31 anos, idade de queda"],
       [{ kind: "loanedOut" }, "Emprestado"],
       [
         { kind: "judgedOnAttributes", age: 19, minutes: 1234, vsAge: 103, ability: 12.34 },

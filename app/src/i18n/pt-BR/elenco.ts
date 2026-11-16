@@ -1,8 +1,7 @@
 export const elenco = {
   clubMissing: {
     title: "Clube não identificado",
-    description:
-      "O save não indicou o clube do técnico humano, então não há elenco nem XI para mostrar. Recarregue com o save do seu clube aberto.",
+    description: "O save não indicou o seu clube. Recarregue com o save do seu clube aberto.",
     reload: "Recarregar",
   },
   building: "O XI ainda está sendo montado",
@@ -24,8 +23,7 @@ export const elenco = {
     gameChanged: "A tática do jogo mudou",
     gameChangedHint: "O XI ou as funções mudaram no jogo depois da sua edição",
     noTactic: "Sem tática do jogo",
-    noTacticHint:
-      "O jogo está no menu, ou esta versão do FM ainda não tem a leitura da tática. Sem ela, o XI começa pelos minutos.",
+    noTacticHint: "O jogo está no menu ou a tática não foi lida. O XI começa pelos jogadores com mais minutos.",
   },
   pitch: {
     label: "Posições do XI",
@@ -127,8 +125,7 @@ export const elenco = {
     styleName: "Estilo mínimo (%): quanto as stats-chave batem com as do seu jogador",
     league: "Liga",
     leagueLabel: "Liga dos candidatos: {{league}}",
-    leagueHint:
-      "Ligas mais fracas inflam os percentis, por isso a liga começa em “Minha liga ou mais forte”, pelo ranking do Rank",
+    leagueHint: "“Mais forte” segue um ranking fixo de ligas",
     leagues: {
       myLeagueOrStronger: "Minha liga ou mais forte",
       myLeague: "Minha liga",
@@ -171,10 +168,10 @@ export const elenco = {
     },
     poolMinutes: {
       label: "Pool ≥",
-      name: "Minutos do pool (vale para Performance, valor justo, Moneyball, Elenco e Rank)",
-      hint: "Abaixo destes minutos não há veredito pelas stats. O mesmo pool serve a todos os modelos do app",
+      name: "Minutos do pool",
+      hint: "Abaixo destes minutos não há veredito pelas stats",
     },
-    scope: "Vale para todo o app: Performance, valor justo, Moneyball, Elenco e Rank.",
+    scope: "Vale para todo o app: Performance, valor justo, Moneyball e Elenco.",
     formation: "Titulares e reservas imediatos vêm do {{formation}} desta página.",
   },
   unit: {
@@ -259,7 +256,7 @@ export const elenco = {
       contractIn: "Contrato acaba em {{months}}",
       overvalued: "Vale {{ratio}}× o valor justo da produção",
       undervalued: "Vale {{pct, count}}% do valor justo da produção",
-      pastPeak: "{{age}} anos: o valor costuma cair daqui em diante",
+      pastPeak: "{{age}} anos, idade de queda",
       loanedOut: "Emprestado",
       judgedOnAttributes:
         "{{age}} anos e {{minutes, count}} min: julgado pelos atributos, Hab./idade {{vsAge, count}}% ({{ability}})",
@@ -274,7 +271,7 @@ export const elenco = {
       keep: "Titular ou reserva imediato, sem outro motivo para sair",
       renew: "Contrato acaba em até {{months}}, e é titular ou reserva imediato",
       sellHigh: "Vale {{ratio}}× o valor justo ou mais (um titular só a partir dos {{age}} anos; goleiro, {{gkAge}})",
-      sellNow: "Contrato acaba em até {{months}}, e não é titular nem reserva imediato: o valor só cai",
+      sellNow: "Contrato acaba em até {{months}}, e não é titular nem reserva imediato",
       surplus: "Nem titular nem reserva imediato na formação do Elenco",
       sellBeforeDecline: "{{age}} anos ou mais (goleiro, {{gkAge}}), reserva imediato e não titular",
       develop: "{{young}}: Hab./idade de {{dev}}% ou mais",
@@ -289,7 +286,7 @@ export const elenco = {
       description:
         "o que fazer com o jogador (manter, renovar, vender, emprestar…) e os motivos, pela idade, o contrato, o valor e o desempenho.",
       reasons: "Motivos",
-      noVerdict: "Emprestado ao clube: o contrato é com outro, então não tem veredito",
+      noVerdict: "Emprestado ao clube: o contrato é de outro clube",
     },
   },
 } as const;

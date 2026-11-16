@@ -37,7 +37,7 @@ export const filters = {
     season: "Esta temporada",
     games: "Últimos {{n}} jogos",
     year: "Temporada {{year}}",
-    hint: "As temporadas passadas e os últimos jogos usam o que o FM guarda das temporadas que terminaram neste save. Os últimos jogos somam a temporada atual com a parte da anterior que falta, em proporção.",
+    hint: "Temporadas passadas vêm do histórico que o FM guarda neste save. Os últimos jogos juntam a temporada atual com a anterior.",
   },
   position: {
     trigger: "Posição: {{position}}",

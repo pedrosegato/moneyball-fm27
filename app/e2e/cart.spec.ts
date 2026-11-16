@@ -145,7 +145,7 @@ test("add 2 buys + 1 sale updates bar and pitch", async ({ page }) => {
   await feeField.fill("£200M");
   await feeField.press("Enter");
   await expect(transfers(page)).toContainText("Estourou");
-  await expect(transfers(page)).toContainText("Nada fica bloqueado");
+  await expect(transfers(page)).toContainText("As compras passam da verba em");
   await expect(feeField).toBeEditable();
 });
 

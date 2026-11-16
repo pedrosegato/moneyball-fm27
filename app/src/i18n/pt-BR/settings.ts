@@ -8,7 +8,6 @@ export const settings = {
   appearance: {
     title: "Aparência",
     theme: "Tema",
-    themeHint: "O escuro acompanha o FM à noite; o claro é para o dia.",
     dark: "Escuro",
     light: "Claro",
   },
@@ -32,31 +31,23 @@ export const settings = {
       continental: "Só continentais",
     },
     pollLabel: "Checar a data do jogo a cada",
-    pollHint:
-      "Quanto menor, mais cedo o app nota que o jogo avançou. De {{min}} a {{max}} s; a checagem é uma leitura leve.",
+    pollHint: "Quanto menor, mais cedo o app nota que o jogo avançou. De {{min}} a {{max}} s.",
     pollName: "Intervalo de checagem do jogo, em segundos",
     pollSuffix: "s",
-  },
-  league: {
-    title: "Análise",
-    label: "Peso da liga",
-    hint: "Quanto a Performance desconta a diferença de força entre a liga do jogador e a sua. 0 desliga; 1 é o desconto estimado pelos dados.",
-    off: "Desligado",
-    multiplier: "{{value}}×",
   },
   restoreAll: {
     title: "Padrões",
     label: "Restaurar todos os padrões",
-    hint: "Tema, checagem do jogo, critérios das páginas, pesos das ligas e das stats compostas.",
+    hint: "Tema, checagem do jogo, peso da liga, critérios das páginas e pesos das Ações/90.",
     open: "Restaurar todos os padrões…",
     dialogTitle: "Restaurar todos os padrões?",
     dialogBody:
-      "Voltam ao padrão o tema, a checagem do jogo, os critérios do Moneyball, do Sell/Keep e das contratações do Elenco, os pesos das ligas e os pesos da Performance e das Ações/90. Suas compostas, a shortlist, o carrinho, as colunas e os filtros ficam como estão.",
+      "Voltam ao padrão o tema, a checagem do jogo, o peso da liga, os critérios do Moneyball, do Sell/Keep e das contratações do Elenco e os pesos das Ações/90. Suas compostas, a Shortlist, o carrinho, as colunas e os filtros ficam como estão.",
   },
   compositesLink: {
     title: "Stats compostas",
     label: "Pesos e compostas próprias",
-    hint: "Performance por posição, Ações/90 e até 6 compostas suas.",
+    hint: "Ações/90 e até 6 compostas suas.",
     edit: "Editar stats compostas",
   },
   composites: {
@@ -88,9 +79,9 @@ export const settings = {
       minStats_other: "Uma composta precisa de pelo menos {{count}} stats",
     },
     kind: {
-      actions: "Soma ponderada dos valores por 90, como as Actions/90 do FMDataLab. Só entram contagens por 90.",
+      actions: "Soma ponderada dos valores por 90. Só entram contagens por 90.",
       custom:
-        "Média ponderada dos percentis das stats, cada jogador contra os da posição dele, como as Custom Computed do FMDataLab. Vira coluna em Compostas e eixo nos Gráficos.",
+        "Média ponderada dos percentis das stats, cada jogador contra os da posição dele. Vira coluna em Compostas e eixo nos Gráficos.",
     },
     note: {
       coverage:
