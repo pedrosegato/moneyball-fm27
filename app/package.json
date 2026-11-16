@@ -1,6 +1,6 @@
 {
   "name": "moneyball-fm27",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
