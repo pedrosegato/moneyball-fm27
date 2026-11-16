@@ -1,5 +1,13 @@
 # Third-party notices
 
+## Allan FCL, "Moneyball FM26" spreadsheet
+
+The base of the role Performance (`app/src/engine/roles/items.ts`) reimplements the per-position indices from the "Moneyball FM26" spreadsheet by [Allan FCL](https://www.youtube.com/@AllanFCL), such as aerial dominance, defensive efficiency, Flair Index, the offensive creation index and GPI. They are recalculated per 90 minutes from the game's match stats, with some adjustments to the formulas.
+
+## Jake Summers, "The Moneyball Playbook"
+
+The role-specific part of the role Performance (`app/src/engine/roles/catalog.ts`) uses the stats that The Moneyball Playbook, by Jake Summers, ties to each Football Manager role, along with the book's idea of judging a player by the role he plays within his position. The book's tier cut-offs are not used.
+
 ## fm-scoring
 
 Moneyball FM27's ability scores use the attribute weights and age benchmarks from fm-scoring
