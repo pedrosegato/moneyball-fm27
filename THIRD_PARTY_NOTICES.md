@@ -2,7 +2,7 @@
 
 ## fm-scoring
 
-FMMT 27's ability scores use the attribute weights and age benchmarks from fm-scoring
+Moneyball FM27's ability scores use the attribute weights and age benchmarks from fm-scoring
 (https://github.com/jamiebolden/fm-scoring, `weights/fm27.toml`), which are tuned toward harvestgreen22's
 FM27 attribute testing on fm-arena. They are used under the following licence:
 

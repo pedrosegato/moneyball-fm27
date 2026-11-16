@@ -1,11 +1,10 @@
-# build output (attach the exe to a GitHub Release instead of committing it)
+node_modules/
 dist/
-build/
-*.spec
-
-# Python
-__pycache__/
-*.pyc
-
-# logs
+target/
+.dev-data/
+app/dist/
+app/test-results/
+app/playwright-report/
+app/src-tauri/gen/
+.vitest/
 *.log
