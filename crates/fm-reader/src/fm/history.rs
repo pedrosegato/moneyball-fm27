@@ -18,7 +18,10 @@ pub const ROW_VERSION: u32 = 7;
 pub const MAX_ROWS_PER_PLAYER: usize = 1024;
 pub const MAX_KEYS: usize = 1 << 20;
 
+const ROW_CLUB: usize = 0x01;
 const ROW_YEAR: usize = 0x0B;
+const NO_CLUB: u32 = u32::MAX;
+const LEAGUE: u8 = 1;
 const ROW_COMPETITION: usize = 0x1F;
 const ROW_RECORD: usize = 0x20;
 
@@ -99,6 +102,27 @@ fn counter(row: &[u8], off: usize, width: Width) -> i32 {
     }
 }
 
+#[derive(Default)]
+struct YearSum {
+    season: Season,
+    record: Record,
+    club: Option<(u32, i32)>,
+}
+
+impl YearSum {
+    fn note_club(&mut self, club: Option<u32>, minutes: i32) {
+        let Some(club) = club else { return };
+        if self.club.is_none_or(|(_, most)| minutes > most) {
+            self.club = Some((club, minutes));
+        }
+    }
+}
+
+fn row_club(row: &[u8]) -> Option<u32> {
+    let club = u32::from_le_bytes(row[ROW_CLUB..ROW_CLUB + 4].try_into().expect("4 bytes"));
+    (club != NO_CLUB).then_some(club)
+}
+
 fn row_season(row: &[u8]) -> Season {
     let mut season = Season::default();
     for (value, &(off, width)) in season.values_mut().zip(&ROW_ENTRY) {
@@ -118,25 +142,30 @@ fn row_record(row: &[u8]) -> Record {
 
 pub fn past_seasons<'a>(rows: impl IntoIterator<Item = &'a [u8]>, scope: Scope) -> Vec<PastSeason> {
     let wanted = competitions(scope);
-    let mut years: BTreeMap<u16, (Season, Record)> = BTreeMap::new();
+    let mut years: BTreeMap<u16, YearSum> = BTreeMap::new();
     for row in rows {
         if row.len() < ROW_SIZE || !wanted.contains(&row[ROW_COMPETITION]) {
             continue;
         }
         let year = u16::from_le_bytes([row[ROW_YEAR], row[ROW_YEAR + 1]]);
-        let (season, record) = years.entry(year).or_default();
-        season.add(&row_season(row));
-        record.add(&row_record(row));
+        let sum = years.entry(year).or_default();
+        let season = row_season(row);
+        if row[ROW_COMPETITION] == LEAGUE {
+            sum.note_club(row_club(row), season.minutes);
+        }
+        sum.season.add(&season);
+        sum.record.add(&row_record(row));
     }
     years
         .into_iter()
         .rev()
-        .filter(|(_, (season, _))| season.minutes > 0)
-        .map(|(year, (season, record))| PastSeason {
+        .filter(|(_, sum)| sum.season.minutes > 0)
+        .map(|(year, sum)| PastSeason {
             year,
-            partial: record.distance10 == 0 && record.sprints == 0,
-            season: season.values(),
-            record: record.values(),
+            partial: sum.record.distance10 == 0 && sum.record.sprints == 0,
+            season: sum.season.values(),
+            record: sum.record.values(),
+            club: sum.club.map(|(club, _)| club),
         })
         .collect()
 }
@@ -204,6 +233,23 @@ mod tests {
         let seasons = past_seasons(rows.iter().map(Vec::as_slice), Scope::League);
         assert_eq!(seasons.len(), 1);
         assert_eq!(field(&seasons[0], "minutes"), 900);
+    }
+
+    #[test]
+    fn keeps_the_league_club_with_the_most_minutes_of_each_year() {
+        let at = |mut r: Vec<u8>, club: u32| {
+            r[ROW_CLUB..ROW_CLUB + 4].copy_from_slice(&club.to_le_bytes());
+            r
+        };
+        let rows = [
+            at(row(2026, 1, 600, 0, 0, 0), 65),
+            at(row(2026, 1, 1400, 0, 0, 0), 2502),
+            at(row(2026, 2, 2000, 0, 0, 0), 77),
+            at(row(2025, 1, 900, 0, 0, 0), NO_CLUB),
+        ];
+        let seasons = past_seasons(rows.iter().map(Vec::as_slice), Scope::Competitive);
+        assert_eq!(seasons[0].club, Some(2502));
+        assert_eq!(seasons[1].club, None);
     }
 
     #[test]

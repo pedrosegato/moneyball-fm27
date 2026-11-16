@@ -98,6 +98,8 @@ pub struct PastSeason {
     pub season: Vec<i32>,
     pub record: Vec<i32>,
     pub partial: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub club: Option<u32>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
