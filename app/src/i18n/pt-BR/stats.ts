@@ -241,7 +241,8 @@ export const stats = {
     "Svp/90": "defesas em que o goleiro rebateu a bola, a cada 90 minutos; quanto mais, melhor.",
     "Svt/90": "defesas em que o goleiro mandou a bola para fora, a cada 90 minutos; quanto mais, melhor.",
     "Sv%": "parte dos chutes no alvo que o goleiro defendeu, em %; quanto mais, melhor.",
-    "xSv%": "o aproveitamento de defesas que um goleiro médio teria contra os mesmos chutes, em %; quanto mais, mais fáceis eram os chutes.",
+    "xSv%":
+      "o aproveitamento de defesas que um goleiro médio teria contra os mesmos chutes, em %; quanto mais, mais fáceis eram os chutes.",
     "Saves/Conc": "defesas para cada gol sofrido; quanto mais, melhor.",
     "xGP/90":
       "gols evitados a cada 90 minutos: os gols que os chutes enfrentados costumam render menos os que o goleiro sofreu; quanto mais, melhor.",
