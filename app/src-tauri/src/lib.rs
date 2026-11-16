@@ -4,7 +4,7 @@ pub mod watcher;
 
 use std::sync::Arc;
 
-use tauri::Runtime;
+use tauri::{AppHandle, Manager, Runtime};
 use tauri_plugin_store::StoreExt;
 
 pub const SETTINGS_STORE: &str = "moneyball-fm27.json";
@@ -63,8 +63,20 @@ fn is_app_origin(url: &tauri::Url) -> bool {
     }
 }
 
+fn show_open_window<R: Runtime>(app: &AppHandle<R>) {
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.unminimize();
+        let _ = window.show();
+        let _ = window.set_focus();
+    }
+}
+
 pub fn run() {
-    configure(tauri::Builder::default())
+    let builder =
+        tauri::Builder::default().plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            show_open_window(app)
+        }));
+    configure(builder)
         .run(tauri::generate_context!())
         .expect("erro ao iniciar o Moneyball FM27");
 }
