@@ -2,6 +2,7 @@ import type { StateCreator } from "zustand";
 import { CURRENT_SEASON, isPeriod, type Period } from "@/engine/period";
 import { isRoleId, type RoleId } from "@/engine/roles/catalog";
 import type { GroupKey } from "./columns";
+import { FILTER_TABLE, type FilterTable } from "./filters";
 import type { AppState } from "./index";
 import { fieldsOf, oneOf } from "./sanitize";
 
@@ -20,14 +21,8 @@ export const PITCH_VIEWS: readonly PitchView[] = Object.values(PITCH_VIEW);
 export const ELENCO_TAB = { squad: "elenco", signings: "contratacoes" } as const;
 export type ElencoTab = (typeof ELENCO_TAB)[keyof typeof ELENCO_TAB];
 
-export const SEARCH_KEY = {
-  scout: "scout",
-  squad: "elenco",
-  signings: "contratacoes",
-  shortlist: "shortlist",
-  cart: "carrinho",
-} as const;
-export type SearchKey = (typeof SEARCH_KEY)[keyof typeof SEARCH_KEY];
+export const SEARCH_KEY = FILTER_TABLE;
+export type SearchKey = FilterTable;
 
 export interface ElencoView {
   slot: number;

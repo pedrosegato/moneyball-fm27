@@ -1,12 +1,9 @@
-import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { COLUMN } from "@/engine/columnIds";
+import { FILTER_TABLE } from "@/store/filters";
 import { appStore, useAppStore } from "@/store/index";
-import { SEARCH_KEY } from "@/store/ui";
 import { useData } from "@/store/useData";
-import type { TableColumnState } from "@/table/columns/types";
 import { usePlayerColumns } from "@/table/hooks/usePlayerColumns";
-import { useTablePageState } from "@/table/hooks/useTablePageState";
 import { PlayerTable } from "@/table/PlayerTable";
 import { FolderList } from "./cart/components/FolderList";
 import { MissingNote } from "./cart/components/MissingNote";
@@ -19,14 +16,9 @@ export function Shortlist() {
   const { t } = useTranslation("cart");
   const { snapshot, analysis } = useData();
   const folders = useAppStore((s) => s.shortlist.folders);
-  const page = useTablePageState();
   const players = snapshot?.players;
   const { folder, choose, rows, missing } = useShortlistFolder(folders, players);
   const { composites, columns } = usePlayerColumns(players, analysis);
-  const columnState = useMemo<TableColumnState>(
-    () => ({ group: null, ...page.columns, fixed: SHORTLIST_FIXED }),
-    [page.columns],
-  );
   const actions = useShortlistActions(folder.id, folders);
 
   if (!snapshot || !analysis || !columns || !players) return null;
@@ -44,19 +36,14 @@ export function Shortlist() {
         )}
         <PlayerTable
           key={folder.id}
+          table={FILTER_TABLE.shortlist}
           rows={rows}
           players={players}
           analysis={analysis}
           composites={composites}
           columns={columns}
-          mode={page.mode}
-          onModeChange={page.setMode}
-          columnState={columnState}
-          columnActions={page.columnActions}
-          onOpenPlayer={page.selectPlayer}
-          selectedUid={page.selectedUid}
+          fixed={SHORTLIST_FIXED}
           selectionActions={actions}
-          searchKey={SEARCH_KEY.shortlist}
           emptyDescription={missing.length ? t("shortlistPage.allMissing") : t("shortlistPage.empty")}
         />
       </div>

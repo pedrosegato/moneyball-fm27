@@ -38,10 +38,9 @@ interface ElencoBoardProps {
   club: number;
   lineup: LineupState;
   tactic: Tactic | null;
-  gameDate: string | null;
 }
 
-export function ElencoBoard({ players, analysis, club, lineup, tactic, gameDate }: ElencoBoardProps) {
+export function ElencoBoard({ players, analysis, club, lineup, tactic }: ElencoBoardProps) {
   const { view, setView, pitchView, setPitchView } = useAppStore(
     useShallow((s) => ({
       view: s.ui.elenco,
@@ -145,13 +144,7 @@ export function ElencoBoard({ players, analysis, club, lineup, tactic, gameDate 
               className="flex min-h-0 flex-1 flex-col"
             >
               {view.tab === ELENCO_TAB.signings ? (
-                <SigningsTab
-                  players={players}
-                  analysis={analysis}
-                  slot={slot}
-                  signings={signings}
-                  gameDate={gameDate}
-                />
+                <SigningsTab players={players} analysis={analysis} slot={slot} signings={signings} />
               ) : (
                 <SquadTab
                   players={players}
@@ -162,7 +155,6 @@ export function ElencoBoard({ players, analysis, club, lineup, tactic, gameDate 
                   bench={bench}
                   slot={slot}
                   slotRole={effective.slots[slot]?.[layout].roleId ?? null}
-                  gameDate={gameDate}
                   placeBlocked={editor.editBlocked}
                   onPlace={(uid) => editor.edit((l) => ({ ...l, picks: placePlayer(l.picks, slot, uid) }))}
                 />

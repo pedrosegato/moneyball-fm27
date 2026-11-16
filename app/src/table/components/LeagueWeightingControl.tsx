@@ -7,7 +7,7 @@ import { LEAGUE_WEIGHTINGS, type LeagueWeighting } from "@/engine/leagueStrength
 import { appStore, useAppStore } from "@/store/index";
 
 export function LeagueWeightingControl() {
-  const { t } = useTranslation("scout");
+  const { t } = useTranslation("table");
   const { weighting, updateSettings } = useAppStore(
     useShallow((s) => ({ weighting: s.settings.engine.leagueWeighting, updateSettings: s.updateSettings })),
   );

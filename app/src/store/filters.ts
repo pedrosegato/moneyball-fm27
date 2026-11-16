@@ -6,7 +6,13 @@ import { fieldsOf, listOf, uniqueBy } from "./sanitize";
 
 export const MAX_FILTERS = 64;
 
-export const FILTER_TABLE = { scout: "scout", squad: "elenco", signings: "contratacoes" } as const;
+export const FILTER_TABLE = {
+  scout: "scout",
+  squad: "elenco",
+  signings: "contratacoes",
+  shortlist: "shortlist",
+  cart: "carrinho",
+} as const;
 export type FilterTable = (typeof FILTER_TABLE)[keyof typeof FILTER_TABLE];
 export const FILTER_TABLES: readonly FilterTable[] = Object.values(FILTER_TABLE);
 

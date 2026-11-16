@@ -1,15 +1,15 @@
 import { renderHook } from "@testing-library/react";
-import { indicesOf, scoutRows, useStableRows } from "./rows";
+import { indicesOf, useStableRows, visibleRows } from "./rows";
 
 const list = (a: ArrayLike<number>) => Array.from(a);
 
-describe("scoutRows", () => {
+describe("visibleRows", () => {
   const candidates = Uint32Array.of(4, 0, 2, 3);
 
   it("keeps the candidates' order, dropping what the filters leave out", () => {
     const visible = Uint8Array.of(1, 1, 1, 0, 1);
-    expect(list(scoutRows(candidates, null))).toEqual([4, 0, 2, 3]);
-    expect(list(scoutRows(candidates, visible))).toEqual([4, 0, 2]);
+    expect(list(visibleRows(candidates, null))).toEqual([4, 0, 2, 3]);
+    expect(list(visibleRows(candidates, visible))).toEqual([4, 0, 2]);
   });
 });
 

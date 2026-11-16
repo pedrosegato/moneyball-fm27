@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-export function scoutRows(candidates: ArrayLike<number>, visible: Uint8Array | null): Uint32Array {
+export function visibleRows(candidates: ArrayLike<number>, visible: Uint8Array | null): Uint32Array {
   const out = new Uint32Array(candidates.length);
   let n = 0;
   for (let k = 0; k < candidates.length; k++) {

@@ -36,7 +36,7 @@ describe("hydrateStore", () => {
     const fresh = createAppStore().getState();
     const state = await hydrated();
     expect(state.settings).toEqual(fresh.settings);
-    expect(state.filters).toEqual({ scout: [], elenco: [], contratacoes: [] });
+    expect(state.filters).toEqual({ scout: [], elenco: [], contratacoes: [], shortlist: [], carrinho: [] });
   });
 
   it("drops unknown keys and puts defaults back for values of the wrong type", async () => {
@@ -112,7 +112,13 @@ describe("hydrateStore", () => {
   it("restores a saved filter list as the Scout's", async () => {
     const age = { col: "age", kind: "range", max: 23 };
     save("filters", [age]);
-    expect((await hydrated()).filters).toEqual({ scout: [age], elenco: [], contratacoes: [] });
+    expect((await hydrated()).filters).toEqual({
+      scout: [age],
+      elenco: [],
+      contratacoes: [],
+      shortlist: [],
+      carrinho: [],
+    });
   });
 
   it("restores a saved record per table, with the rules of a list", async () => {
@@ -541,6 +547,8 @@ describe("persistStore", () => {
         scout: [{ col: "age", kind: "range", max: 23 }],
         elenco: [],
         contratacoes: [],
+        shortlist: [],
+        carrinho: [],
       });
       persisted.stop();
     } finally {

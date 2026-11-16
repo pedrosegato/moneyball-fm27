@@ -7,7 +7,7 @@ import { TABLE_LAB_HASH } from "@/shell/routeIds";
 import type { ColumnsState } from "@/store/columns";
 import { SEARCH_KEY, VALUE_MODE, type ValueMode } from "@/store/ui";
 import { allRows, analyzeFixture, demoPlayers, worstCasePlayers } from "@/table/fixtures";
-import { PlayerTable } from "@/table/PlayerTable";
+import { PlayerTableView } from "@/table/PlayerTableView";
 import { PLAYER_ACTIONS } from "@/table/playerActions";
 
 const DATASETS = ["demo", "worst", "empty", "one"] as const;
@@ -56,7 +56,7 @@ export default function TableLab() {
   return (
     <TooltipProvider>
       <div className="flex h-screen flex-col bg-background text-foreground">
-        <PlayerTable
+        <PlayerTableView
           rows={rows}
           players={source.players}
           analysis={source.analysis}

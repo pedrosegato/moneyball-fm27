@@ -6,13 +6,8 @@ import type { PlayerRecord } from "@/data/types";
 import { COLUMN } from "@/engine/columnIds";
 import type { AnalysisResult } from "@/engine/index";
 import type { FitRow } from "@/engine/tacticalFit";
-import { useFilterableTable } from "@/filters/hooks/useFilterableTable";
 import { FILTER_TABLE } from "@/store/filters";
 import { useAppStore } from "@/store/index";
-import { SEARCH_KEY } from "@/store/ui";
-import type { TableColumnState } from "@/table/columns/types";
-import type { EmptyAction } from "@/table/components/TableEmpty";
-import { useTablePageState } from "@/table/hooks/useTablePageState";
 import { PlayerTable } from "@/table/PlayerTable";
 import { PLAYER_ACTIONS } from "@/table/playerActions";
 import { useSigningsColumns } from "../hooks/useSigningsColumns";
@@ -29,12 +24,10 @@ interface SigningsTabProps {
   analysis: AnalysisResult;
   slot: number;
   signings: readonly FitRow[];
-  gameDate: string | null;
 }
 
-export function SigningsTab({ players, analysis, slot, signings, gameDate }: SigningsTabProps) {
+export function SigningsTab({ players, analysis, slot, signings }: SigningsTabProps) {
   const { t } = useTranslation(["elenco", "common"]);
-  const page = useTablePageState();
   const store = useAppStore(
     useShallow((s) => ({
       lvl: s.settings.engine.fit.lvl,
@@ -46,28 +39,12 @@ export function SigningsTab({ players, analysis, slot, signings, gameDate }: Sig
   const lvl = lvlDraft ?? store.lvl;
   const { group, composites, columns } = useSigningsColumns(players, analysis, slot, lvl);
   const verdicts = useSigningsVerdicts(analysis, slot, signings, lvl);
-  const filters = useFilterableTable({
-    table: FILTER_TABLE.signings,
-    columns,
-    players,
-    analysis,
-    mode: page.mode,
-    gameDate,
-  });
   const undervalued = useMemo(() => undervaluedSet(analysis), [analysis]);
-  const columnState = useMemo<TableColumnState>(
-    () => ({ group, ...page.columns, fixed: store.undervaluedOnly ? MONEYBALL_FIXED : FIT_FIXED }),
-    [group, page.columns, store.undervaluedOnly],
-  );
 
   if (!columns) return null;
 
   const candidates = analysis.fit[slot];
   const listed = store.undervaluedOnly ? candidates.filter((r) => undervalued.has(r.index)) : candidates;
-  const ways: EmptyAction[] = [];
-  if (store.undervaluedOnly)
-    ways.push({ label: t("signings.showAll"), onClick: () => store.setUndervaluedOnly(false) });
-  if (filters.clearAction) ways.push(filters.clearAction);
 
   return (
     <>
@@ -79,23 +56,17 @@ export function SigningsTab({ players, analysis, slot, signings, gameDate }: Sig
       />
       <PlayerTable
         key={`${slot}${store.undervaluedOnly ? "-moneyball" : ""}`}
+        table={FILTER_TABLE.signings}
         rows={verdicts.rows}
         total={listed.length}
         players={players}
         analysis={analysis}
         composites={composites}
         columns={columns}
-        mode={page.mode}
-        onModeChange={page.setMode}
-        columnState={columnState}
-        columnActions={page.columnActions}
-        onOpenPlayer={page.selectPlayer}
-        selectedUid={page.selectedUid}
-        filtering={filters.filtering}
+        group={group}
+        fixed={store.undervaluedOnly ? MONEYBALL_FIXED : FIT_FIXED}
         defaultSort={FIT_SORT}
         selectionActions={PLAYER_ACTIONS}
-        searchKey={SEARCH_KEY.signings}
-        filtersPanel={filters.filtersPanel}
         chips={
           <ToggleChip
             label={t("common:onlyUndervalued")}
@@ -103,14 +74,14 @@ export function SigningsTab({ players, analysis, slot, signings, gameDate }: Sig
             onChange={store.setUndervaluedOnly}
           />
         }
-        filterBar={filters.filterBar}
         criteria={<FitCriteria lvl={lvl} onLvlDraft={setLvlDraft} />}
         emptyDescription={
           store.undervaluedOnly && listed.length === 0 ? t("signings.noUndervalued") : t("signings.empty")
         }
-        emptyActions={ways}
+        emptyActions={[
+          store.undervaluedOnly && { label: t("signings.showAll"), onClick: () => store.setUndervaluedOnly(false) },
+        ]}
       />
-      {filters.editorPopover}
     </>
   );
 }

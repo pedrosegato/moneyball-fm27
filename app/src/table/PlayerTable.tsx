@@ -1,210 +1,109 @@
-import { functionalUpdate, type SortingState, type Updater, useTable } from "@tanstack/react-table";
-import { type ReactNode, useMemo, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
+import { type ReactNode, useMemo } from "react";
+import { useShallow } from "zustand/react/shallow";
 import type { PlayerRecord } from "@/data/types";
 import type { Composite } from "@/engine/composites";
 import type { AnalysisResult } from "@/engine/index";
-import type { ColumnFiltering } from "@/filters/lib/headerMenu";
-import { createHeaderMenuHandle } from "@/filters/lib/headerMenuHandle";
-import { playersCsvName } from "@/lib/storageKeys";
-import { appStore } from "@/store/index";
-import { type SearchKey, VALUE_MODE, type ValueMode } from "@/store/ui";
-import { buildColumns } from "./columns/build";
-import { sortRows } from "./columns/sort";
+import type { PosGroup } from "@/engine/positions";
+import { useFilterableTable } from "@/filters/hooks/useFilterableTable";
+import { PositionFilter } from "@/filters/PositionFilter";
+import { ownsPositionFilter } from "@/filters/positionChoice";
+import type { FilterTable } from "@/store/filters";
+import { useAppStore } from "@/store/index";
 import type { TableColumn, TableColumnState } from "./columns/types";
-import { visibleColumnIds } from "./columns/visibility";
-import { TableBody } from "./components/TableBody";
-import { type EmptyAction, TableEmpty } from "./components/TableEmpty";
-import { TableToolbar } from "./components/TableToolbar";
-import { useColumnDefs } from "./hooks/useColumnDefs";
-import { useHeaderMenuActions } from "./hooks/useHeaderMenuActions";
-import { usePlayerSearch } from "./hooks/usePlayerSearch";
-import { useTableSorting } from "./hooks/useTableSorting";
-import type { ColumnActions } from "./lib/columnActions";
-import { downloadCsv, toCsv } from "./lib/csv";
+import { LeagueWeightingControl } from "./components/LeagueWeightingControl";
+import type { EmptyAction } from "./components/TableEmpty";
+import { useTablePageState } from "./hooks/useTablePageState";
+import { presentActions } from "./lib/emptyActions";
+import { currentMask, useStableRows, visibleRows } from "./lib/rows";
 import type { SelectionAction } from "./lib/selectionActions";
-import { features, type NameCellWrap, type RowRef } from "./lib/tableModel";
+import type { NameCellWrap } from "./lib/tableModel";
+import { PlayerTableView } from "./PlayerTableView";
+import { POSITION_COLUMN, presetGroupOf } from "./positionPreset";
 
 export interface PlayerTableProps {
+  table: FilterTable;
   rows: Uint32Array;
+  total?: number;
   players: readonly PlayerRecord[];
   analysis: AnalysisResult;
   composites: readonly Composite[];
-  mode: ValueMode;
-  onModeChange(mode: ValueMode): void;
-  columnState: TableColumnState;
-  columnActions: ColumnActions;
-  onOpenPlayer(uid: number): void;
-  selectedUid?: number | null;
-  columns?: readonly TableColumn[];
-  total?: number;
-  filtering?: ColumnFiltering;
-  searchKey: SearchKey;
-  position?: ReactNode;
+  columns: readonly TableColumn[];
+  group?: PosGroup | null;
+  fixed?: readonly string[];
+  lead?: readonly string[];
   chips?: ReactNode;
-  filterBar?: ReactNode;
-  filtersPanel?: ReactNode;
   criteria?: ReactNode;
-  scoring?: ReactNode;
-  emptyActions?: readonly EmptyAction[];
+  emptyActions?: readonly (EmptyAction | false | null)[];
   emptyDescription?: string;
   defaultSort?: { id: string; desc: boolean };
   selectionActions?: readonly SelectionAction[];
   nameCell?: NameCellWrap;
 }
 
-const NO_ROWS: RowRef[] = [];
 const NO_ACTIONS: readonly EmptyAction[] = [];
 
 export function PlayerTable({
+  table,
   rows,
+  total,
   players,
   analysis,
-  composites,
-  mode,
-  onModeChange,
-  columnState,
-  columnActions,
-  onOpenPlayer,
-  selectedUid = null,
-  columns: prebuilt,
-  total,
-  filtering,
-  searchKey,
-  position,
-  chips,
-  filterBar,
-  filtersPanel,
-  criteria,
-  scoring,
+  columns,
+  group,
+  fixed,
+  lead,
   emptyActions = NO_ACTIONS,
-  emptyDescription,
-  defaultSort,
-  selectionActions,
-  nameCell,
+  ...view
 }: PlayerTableProps) {
-  const { t } = useTranslation("table");
-  const columns = useMemo(
-    () => prebuilt ?? buildColumns({ players, analysis, composites }),
-    [prebuilt, players, analysis, composites],
+  const page = useTablePageState();
+  const { filters, visible, gameDate } = useAppStore(
+    useShallow((s) => ({
+      filters: s.filters[table],
+      visible: s.data.visible[table],
+      gameDate: s.data.gameDate ?? s.data.snapshot?.date ?? null,
+    })),
   );
-  const columnDefs = useColumnDefs(columns, mode);
-  const byId = useMemo(() => new Map(columns.map((c) => [c.id, c])), [columns]);
-  const { group, presets, groups, fixed, lead } = columnState;
-  const visibleIds = useMemo(
-    () => visibleColumnIds(columns, { group, presets, groups, fixed, lead }),
-    [columns, group, presets, groups, fixed, lead],
-  );
-  const columnVisibility = useMemo(() => {
-    const shown = new Set(visibleIds);
-    return Object.fromEntries(columns.map((c) => [c.id, shown.has(c.id)]));
-  }, [columns, visibleIds]);
-
-  const { sorting, chosenSort, setChosenSort } = useTableSorting({
-    byId,
-    visibleIds,
-    columnVisibility,
-    columnState,
-    defaultSort,
-    mode,
+  const filterable = useFilterableTable({
+    table,
+    columns,
+    players,
+    analysis,
+    mode: page.mode,
+    gameDate,
+    shownElsewhere: ownsPositionFilter(filters) ? POSITION_COLUMN : undefined,
   });
-
-  const table = useTable({
-    features,
-    columns: columnDefs,
-    data: NO_ROWS,
-    state: { columnVisibility, columnOrder: visibleIds, sorting },
-    onSortingChange: (updater: Updater<SortingState>) => setChosenSort(functionalUpdate(updater, sorting)),
-    manualSorting: true,
-    enableMultiSort: false,
-    enableSortingRemoval: true,
-  });
-
-  const visibleColumns = useMemo(
-    () =>
-      visibleIds.flatMap((id) => {
-        const column = byId.get(id);
-        return column ? [column] : [];
-      }),
-    [visibleIds, byId],
+  const presetGroup = group === undefined ? presetGroupOf(filters) : group;
+  const columnState = useMemo<TableColumnState>(
+    () => ({ group: presetGroup, ...page.columns, fixed, lead }),
+    [presetGroup, page.columns, fixed, lead],
   );
-
-  const { query, terms, searched } = usePlayerSearch(rows, players, searchKey);
-
-  const sort = sorting[0];
-  const sortKey = sort ? byId.get(sort.id)?.sortKey(mode) : undefined;
-  const sortDesc = sort?.desc;
-  const sortedRows = useMemo(
-    () => (sortKey && sortDesc !== undefined ? sortRows(searched, sortKey, sortDesc) : searched),
-    [searched, sortKey, sortDesc],
-  );
-
-  const exportCsv = () =>
-    downloadCsv(toCsv(sortedRows, visibleColumns, mode), playersCsvName(mode === VALUE_MODE.percentile));
-
-  const tableRef = useRef<HTMLTableElement>(null);
-  const [menuHandle] = useState(createHeaderMenuHandle);
-  const menuActions = useHeaderMenuActions({
-    byId,
-    tableRef,
-    sorting,
-    chosenSort,
-    setChosenSort,
-    columnState,
-    columnActions,
-    filtering,
-  });
-
-  const listed = searched.length;
-  const searchEmptied = terms.length > 0 && rows.length > 0;
-  const clearSearch = { label: t("search.clear"), onClick: () => appStore.getState().setSearch(searchKey, "") };
-  const ways = searchEmptied ? [clearSearch, ...emptyActions] : emptyActions;
+  const mask = currentMask(visible, players.length);
+  const shown = useStableRows(useMemo(() => visibleRows(rows, mask), [rows, mask]));
 
   return (
-    <section aria-label={t("view.region")} className="flex min-h-0 min-w-0 flex-1 flex-col">
-      <TableToolbar
-        searchKey={searchKey}
-        listed={listed}
-        of={total ?? rows.length}
-        columns={columns}
-        columnState={columnState}
-        columnActions={columnActions}
-        mode={mode}
-        onModeChange={onModeChange}
-        onExport={exportCsv}
-        position={position}
-        filtersPanel={filtersPanel}
-        chips={chips}
-        filterBar={filterBar}
-        criteria={criteria}
-        scoring={scoring}
-      />
-      <TableBody
-        table={table}
-        tableRef={tableRef}
-        rows={sortedRows}
-        filtered={searched}
-        sorting={sorting}
+    <>
+      <PlayerTableView
+        {...view}
+        rows={shown}
+        total={total ?? rows.length}
         players={players}
-        columns={visibleColumns}
-        mode={mode}
-        selectedUid={selectedUid}
-        onOpenPlayer={onOpenPlayer}
-        menuHandle={menuHandle}
-        menuActions={menuActions}
-        filtering={filtering}
-        selectionActions={selectionActions}
-        nameCell={nameCell}
-        empty={
-          listed === 0 && (
-            <TableEmpty
-              query={searchEmptied ? query : null}
-              description={emptyDescription ?? t("empty.filtered")}
-              ways={ways}
-            />
-          )
-        }
+        analysis={analysis}
+        columns={columns}
+        searchKey={table}
+        mode={page.mode}
+        onModeChange={page.setMode}
+        columnState={columnState}
+        columnActions={page.columnActions}
+        onOpenPlayer={page.selectPlayer}
+        selectedUid={page.selectedUid}
+        filtering={filterable.filtering}
+        position={<PositionFilter table={table} />}
+        filtersPanel={filterable.filtersPanel}
+        filterBar={filterable.filterBar}
+        scoring={<LeagueWeightingControl />}
+        emptyActions={presentActions([...emptyActions, filterable.clearAction])}
       />
-    </section>
+      {filterable.editorPopover}
+    </>
   );
 }
