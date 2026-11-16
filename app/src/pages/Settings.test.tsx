@@ -31,25 +31,6 @@ describe("Configurações", () => {
     expect(composites.custom.map((c) => c.id)).toEqual([id]);
   });
 
-  it("sets the league weight from 0 to 3 in steps of 0,5, on by default", async () => {
-    const user = userEvent.setup();
-    renderWithData(<Settings />, startData().controller);
-    const section = screen.getByRole("region", { name: "Análise" });
-    const weights = within(section).getByRole("radiogroup", { name: "Peso da liga" });
-    expect(
-      within(weights)
-        .getAllByRole("radio")
-        .map((r) => r.textContent),
-    ).toEqual(["Desligado", "0,5×", "1×", "1,5×", "2×", "2,5×", "3×"]);
-    expect(within(weights).getByRole("radio", { name: "1×" })).toBeChecked();
-    await user.click(within(weights).getByRole("radio", { name: "2,5×" }));
-    expect(appStore.getState().settings.engine.leagueAdjustment).toBe(2.5);
-    await user.click(within(weights).getByRole("radio", { name: "Desligado" }));
-    expect(appStore.getState().settings.engine.leagueAdjustment).toBe(0);
-    await user.click(within(section).getByRole("button", { name: "Restaurar padrão" }));
-    expect(appStore.getState().settings.engine.leagueAdjustment).toBe(1);
-  });
-
   it("picks the games read in Jogo, reading the game again with the chosen scope", async () => {
     const user = userEvent.setup();
     const data = startData();

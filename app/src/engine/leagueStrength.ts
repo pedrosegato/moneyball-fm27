@@ -1,8 +1,11 @@
 import type { PlayerRecord } from "@/data/types";
 import { clubLeague, minutesOf, seniorFlags } from "./club";
-import { leastSquares } from "./fairValue";
 import { leagueKey } from "./league";
-import { POS_GROUPS, type PosGroup } from "./positions";
+
+export const LEAGUE_WEIGHTING = { none: "none", measured: "measured" } as const;
+export type LeagueWeighting = (typeof LEAGUE_WEIGHTING)[keyof typeof LEAGUE_WEIGHTING];
+export const LEAGUE_WEIGHTINGS: readonly LeagueWeighting[] = Object.values(LEAGUE_WEIGHTING);
+export const DEFAULT_LEAGUE_WEIGHTING: LeagueWeighting = LEAGUE_WEIGHTING.measured;
 
 export interface LeagueStrengthOptions {
   minMinutes: number;
@@ -20,13 +23,6 @@ export interface LeagueStrength {
   strength: number;
   starters: number;
 }
-
-export interface CoefficientOptions {
-  poolMinutes: number;
-  minRows?: number;
-}
-
-const MIN_ROWS = 50;
 
 const knownCa = (r: PlayerRecord): boolean => Number.isFinite(r.ca) && r.ca > 0;
 
@@ -77,40 +73,14 @@ export function clubLeagueStrength(
   return key === null ? null : (index.get(key)?.strength ?? null);
 }
 
-export function leagueCoefficient(
-  players: readonly PlayerRecord[],
-  perfByGroup: Readonly<Record<PosGroup, ArrayLike<number>>>,
-  strengthOf: ArrayLike<number>,
-  groupOf: readonly PosGroup[],
-  { poolMinutes, minRows = MIN_ROWS }: CoefficientOptions,
-): number {
-  const rows: [x: number[], y: number][] = [];
-  players.forEach((r, i) => {
-    const perf = perfByGroup[groupOf[i]][i];
-    const strength = strengthOf[i];
-    if (minutesOf(r) < poolMinutes || !Number.isFinite(perf) || !Number.isFinite(strength) || !knownCa(r)) return;
-    rows.push([[1, r.ca, strength], perf]);
-  });
-  if (rows.length < minRows || rows.every(([x]) => x[2] === rows[0][0][2])) return 0;
-  const c = leastSquares(rows)[2];
-  return Number.isFinite(c) ? c : 0;
-}
-
-export function adjustedPerformance(perf: number, strength: number, myStrength: number, coef: number): number {
-  return Number.isFinite(strength) && Number.isFinite(myStrength) ? perf - coef * (strength - myStrength) : perf;
-}
-
-export function adjustedPerformances(
-  perfBase: Readonly<Record<PosGroup, ArrayLike<number>>>,
-  strength: ArrayLike<number>,
-  myStrength: number | null,
-  coef: number,
-): Record<PosGroup, Float32Array> {
-  const mine = myStrength ?? NaN;
-  return Object.fromEntries(
-    POS_GROUPS.map((g) => [
-      g,
-      Float32Array.from(perfBase[g], (perf, i) => adjustedPerformance(perf, strength[i], mine, coef)),
-    ]),
-  ) as Record<PosGroup, Float32Array>;
+export function leagueFactors(strength: ArrayLike<number>): Float64Array {
+  let top = Number.NEGATIVE_INFINITY;
+  let bottom = Number.POSITIVE_INFINITY;
+  for (let i = 0; i < strength.length; i++) {
+    if (!Number.isFinite(strength[i])) continue;
+    top = Math.max(top, strength[i]);
+    bottom = Math.min(bottom, strength[i]);
+  }
+  if (!(top > 0)) return new Float64Array(strength.length).fill(1);
+  return Float64Array.from(strength, (s) => (Number.isFinite(s) ? s : bottom) / top);
 }

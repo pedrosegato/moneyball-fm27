@@ -3,7 +3,7 @@ import { messageOf } from "@/lib/errors";
 import { analysisColumns } from "./analysis/columns";
 import { analyzeDisplay, type DisplayAnalysis } from "./analysis/display";
 import type { AnalysisInput } from "./analysis/input";
-import { analyzeModel, type ModelAnalysis } from "./analysis/model";
+import { type ModelAnalysis, type RoleModel, scoreModel, weighModel } from "./analysis/model";
 import { type PreparedSnapshot, prepareSnapshot, type SnapshotAnalysis } from "./analysis/prepare";
 import { type RoleAnalysis, viewRoles } from "./analysis/roles";
 import { type ScoreAnalysis, scorePlayers } from "./analysis/score";
@@ -63,7 +63,8 @@ interface Cached<T> {
 interface PeriodWork {
   prepared: PreparedSnapshot;
   display: Cached<DisplayAnalysis> | null;
-  model: Cached<ModelAnalysis> | null;
+  model: Cached<RoleModel> | null;
+  weighed: Cached<ModelAnalysis> | null;
   scores: Cached<ScoreAnalysis> | null;
   squad: Cached<SquadRoleAnalysis> | null;
 }
@@ -73,20 +74,22 @@ const KEPT_PERIODS = 2;
 export function createEngineSession(): EngineSession {
   let loaded: Loaded | null = null;
   let display: Cached<DisplayAnalysis> | null = null;
-  let model: Cached<ModelAnalysis> | null = null;
+  let model: Cached<RoleModel> | null = null;
+  let weighed: Cached<ModelAnalysis> | null = null;
   let scores: Cached<ScoreAnalysis> | null = null;
   let squad: Cached<SquadRoleAnalysis> | null = null;
   let columns: Columns | null = null;
   const kept = new Map<Period, PeriodWork>();
 
   function switchPeriod(held: Loaded, period: Period) {
-    kept.set(held.period, { prepared: held.prepared, display, model, scores, squad });
+    kept.set(held.period, { prepared: held.prepared, display, model, weighed, scores, squad });
     const back = kept.get(period);
     kept.delete(period);
     while (kept.size > KEPT_PERIODS) kept.delete(kept.keys().next().value as Period);
     held.prepared = back?.prepared ?? prepareSnapshot(applyPeriod(held.snapshot, period));
     display = back?.display ?? null;
     model = back?.model ?? null;
+    weighed = back?.weighed ?? null;
     scores = back?.scores ?? null;
     squad = back?.squad ?? null;
     columns = null;
@@ -102,7 +105,7 @@ export function createEngineSession(): EngineSession {
   function analyze({ snapshotId, snapshot, input }: Extract<EngineRequest, { type: "analyze" }>) {
     const period = input.period ?? CURRENT_SEASON;
     if (snapshot) {
-      loaded = display = model = scores = squad = columns = null;
+      loaded = display = model = weighed = scores = squad = columns = null;
       kept.clear();
       const prepared = prepareSnapshot(applyPeriod(snapshot, period));
       loaded = { id: snapshotId, snapshot, period, prepared, delivered: false };
@@ -110,35 +113,40 @@ export function createEngineSession(): EngineSession {
     const held = holding(snapshotId);
     if (held.period !== period) switchPeriod(held, period);
     const { prepared } = held;
-    const { poolMinutes, leagueAdjustment } = input.settings;
+    const { poolMinutes, leagueWeighting } = input.settings;
     const { composites, myClubUid } = input;
     const displayKey = JSON.stringify([poolMinutes, composites]);
     const nextDisplay =
       display?.key === displayKey
         ? display
         : { key: displayKey, analysis: analyzeDisplay(prepared, { poolMinutes, composites }) };
-    const modelKey = JSON.stringify([poolMinutes, leagueAdjustment, myClubUid]);
+    const modelKey = JSON.stringify([poolMinutes, myClubUid]);
     const nextModel =
       model?.key === modelKey
         ? model
         : {
             key: modelKey,
-            analysis: analyzeModel(prepared, { poolMinutes, leagueAdjustment, myClubUid }),
+            analysis: scoreModel(prepared, { poolMinutes, myClubUid }),
           };
-    const scoresKey = JSON.stringify([modelKey, input.settings, input.lineup ?? null]);
+    const weighedKey = JSON.stringify([modelKey, leagueWeighting]);
+    const nextWeighed =
+      weighed?.key === weighedKey
+        ? weighed
+        : { key: weighedKey, analysis: weighModel(prepared, nextModel.analysis, leagueWeighting) };
+    const scoresKey = JSON.stringify([weighedKey, input.settings, input.lineup ?? null]);
     const nextScores =
       scores?.key === scoresKey
         ? scores
-        : { key: scoresKey, analysis: scorePlayers(prepared, nextModel.analysis, input) };
+        : { key: scoresKey, analysis: scorePlayers(prepared, nextWeighed.analysis, input) };
     const nextSquad =
-      squad?.key === modelKey
+      squad?.key === weighedKey
         ? squad
         : {
-            key: modelKey,
+            key: weighedKey,
             analysis: {
               squadRoles: squadRoles(
                 prepared.records,
-                nextModel.analysis.roles,
+                nextWeighed.analysis.roles,
                 myClubUid,
                 poolFlags(prepared.records, poolMinutes),
               ),
@@ -147,13 +155,14 @@ export function createEngineSession(): EngineSession {
     const analysis = {
       ...nextDisplay.analysis,
       ...nextScores.analysis,
-      ...viewRoles(prepared.records, prepared.groups, nextModel.analysis.roles, input.role ?? null),
+      ...viewRoles(prepared.records, prepared.groups, nextWeighed.analysis.roles, input.role ?? null),
       ...nextSquad.analysis,
       period,
     };
-    [display, model, scores, squad, columns] = [
+    [display, model, weighed, scores, squad, columns] = [
       nextDisplay,
       nextModel,
+      nextWeighed,
       nextScores,
       nextSquad,
       analysisColumns(prepared, analysis),

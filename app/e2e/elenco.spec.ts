@@ -70,7 +70,6 @@ async function engineElenco(page: Page): Promise<EngineElenco> {
     const myClubUid: number = snapshot.my_clubs.find((c: { uid: number | null }) => c.uid !== null).uid;
     const model = analyzeModel(prepared, {
       poolMinutes: settings.poolMinutes,
-      leagueAdjustment: settings.leagueAdjustment,
       myClubUid,
     });
     const { lineup, fit, sellKeep } = scorePlayers(prepared, model, {
@@ -356,19 +355,22 @@ test("drags a squad player onto a slot and the others stay put", async ({ page }
     .evaluateAll((rows) => rows.map((r) => Number((r as HTMLElement).dataset.player)));
   const bench = fit.squad.find((p) => p.atClub && !inXi.has(p.uid) && mounted.includes(p.uid))!;
   expect(bench, "a mounted player at the club outside the XI").toBeTruthy();
-  const midfield = fit.slots.indexOf("M(C)");
-  expect(midfield).toBeGreaterThanOrEqual(0);
+  const slot = fit.slots.find((code) => code !== "GK" && fit.slots.indexOf(code) === fit.slots.lastIndexOf(code));
+  expect(slot, "a slot that appears once in the game's tactic").toBeTruthy();
+  const label = await page.evaluate(async (code) => {
+    const load = (path: string) => import(path);
+    const { slotName } = await load("/src/pages/elenco/lib/slots.ts");
+    return slotName(code) as string;
+  }, slot!);
 
-  const target = pitch(page)
-    .getByRole("radio", { name: /^Meio-campista \(MC\)/ })
-    .first();
+  const target = pitch(page).getByRole("radio", { name: new RegExp(`^${label.replace(/[()]/g, "\\$&")}`) });
   await drag(page, row(page, bench.uid).locator("th span").first(), target);
 
   await expect.poll(async () => Object.keys(await savedPicks(page)).length).toBe(11);
   const picks = await savedPicks(page);
   const changed = fit.xi.flatMap((uid, s) => (picks[String(s)] === uid ? [] : [s]));
   expect(changed, "only the dropped slot moved").toHaveLength(1);
-  expect(fit.slots[changed[0]]).toBe("M(C)");
+  expect(fit.slots[changed[0]]).toBe(slot);
   expect(picks[String(changed[0])]).toBe(bench.uid);
   await expect(target).toHaveAccessibleName(new RegExp(bench.name.split(" ").pop()!));
 });

@@ -2,7 +2,6 @@ import { Appearance } from "./Appearance";
 import { CompositesLink } from "./CompositesLink";
 import { GameCurrency } from "./GameCurrency";
 import { GameSettings } from "./GameSettings";
-import { LeagueAdjustment } from "./LeagueAdjustment";
 import { RestoreAll } from "./RestoreAll";
 
 export function General() {
@@ -12,7 +11,6 @@ export function General() {
         <Appearance />
         <GameCurrency />
         <GameSettings />
-        <LeagueAdjustment />
         <CompositesLink />
         <RestoreAll />
       </div>

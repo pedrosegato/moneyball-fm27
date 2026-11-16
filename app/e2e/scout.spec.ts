@@ -74,7 +74,6 @@ async function engineMoneyball(page: Page): Promise<string[]> {
     const myClubUid = snapshot.my_clubs.find((c: { uid: number | null }) => c.uid !== null)?.uid ?? null;
     const model = analyzeModel(prepared, {
       poolMinutes: settings.poolMinutes,
-      leagueAdjustment: settings.leagueAdjustment,
       myClubUid,
     });
     const { moneyball } = scorePlayers(prepared, model, { myClubUid, settings });
@@ -179,9 +178,9 @@ test("the table search narrows only its table", async ({ page }) => {
   await search.fill("negueba");
   await expect(status(page)).toContainText(` de ${count(players.length)} jogadores`);
 
-  await page.goto("/#/rank");
-  const rankSearch = page.getByRole("searchbox", { name: "Buscar nesta lista" });
-  await expect(rankSearch).toHaveValue("", LOADED);
+  await page.goto("/#/elenco");
+  const squadSearch = page.getByRole("searchbox", { name: "Buscar nesta lista" });
+  await expect(squadSearch).toHaveValue("", LOADED);
   await expect(status(page)).not.toContainText(" de ", LOADED);
 
   await page.goto("/#/scout");
@@ -225,7 +224,9 @@ test("changing min ratio to 3 narrows the list", async ({ page }) => {
   expect(await shownCount(page)).toBeGreaterThan(0);
   const ratios = await table(page)
     .locator('tbody tr[data-player] [data-column-id="valueRatio"]')
-    .evaluateAll((cells) => cells.map((c) => Number(c.textContent!.replace("×", "").replace(",", "."))));
+    .evaluateAll((cells) =>
+      cells.map((c) => Number(c.textContent!.replace("×", "").replaceAll(".", "").replace(",", "."))),
+    );
   expect(ratios.length).toBeGreaterThan(5);
   expect(ratios.every((r) => r >= 3)).toBe(true);
   await expect

@@ -18,6 +18,7 @@ import { presentActions } from "@/table/lib/emptyActions";
 import { PlayerTable } from "@/table/PlayerTable";
 import { PLAYER_ACTIONS } from "@/table/playerActions";
 import { POSITION_COLUMN, presetGroupOf } from "@/table/positionPreset";
+import { LeagueWeightingControl } from "./scout/components/LeagueWeightingControl";
 import { MoneyballCriteria } from "./scout/components/MoneyballCriteria";
 import { useScoutRows } from "./scout/hooks/useScoutRows";
 import { MONEYBALL_COLUMNS, MONEYBALL_SORT } from "./scout/lib/moneyball";
@@ -85,6 +86,7 @@ export function Scout() {
         }
         filterBar={filterable.filterBar}
         criteria={undervaluedOnly && <MoneyballCriteria />}
+        scoring={<LeagueWeightingControl />}
         emptyActions={ways}
         emptyDescription={undervaluedOnly ? t("emptyMoneyball") : undefined}
       />

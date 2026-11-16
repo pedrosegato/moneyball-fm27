@@ -4,7 +4,7 @@ import { NO_ROLE } from "./analysis/roles";
 import { squadRolePerf } from "./analysis/squadRoles";
 import { percentileColumn } from "./columnIds";
 import { defaultActionsPresets } from "./composites";
-import { leagueCoefficient, leagueStrengthIndex } from "./leagueStrength";
+import { leagueFactors, leagueStrengthIndex } from "./leagueStrength";
 import { groupPercentiles, poolPercentiles } from "./percentiles";
 import { POS_NAMES } from "./positions";
 import { scoreRoles } from "./roles/score";
@@ -25,7 +25,7 @@ vi.mock("./leagueStrength", async (importOriginal) => {
   return {
     ...actual,
     leagueStrengthIndex: vi.fn(actual.leagueStrengthIndex),
-    leagueCoefficient: vi.fn(actual.leagueCoefficient),
+    leagueFactors: vi.fn(actual.leagueFactors),
   };
 });
 vi.mock("./roles/score", async (importOriginal) => {
@@ -95,7 +95,7 @@ const ranks = () => vi.mocked(groupPercentiles).mock.calls.length;
 const poolRanks = () => vi.mocked(poolPercentiles).mock.calls.length;
 const derives = () => vi.mocked(deriveAll).mock.calls.length;
 const leagueIndexes = () => vi.mocked(leagueStrengthIndex).mock.calls.length;
-const leagueFits = () => vi.mocked(leagueCoefficient).mock.calls.length;
+const leagueFits = () => vi.mocked(leagueFactors).mock.calls.length;
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -153,6 +153,20 @@ describe("engine session", () => {
     expect(scored).toBe(1);
   });
 
+  it("changing the league weight reuses the role scores and moves Performance", () => {
+    const session = createEngineSession();
+    const measured = analyzed(session.handle(analyze({ snapshot })).response).analysis;
+    const scored = vi.mocked(scoreRoles).mock.calls.length;
+    const none = { ...DEFAULT_ENGINE_SETTINGS, leagueWeighting: "none" } as const;
+    const plain = analyzed(session.handle(analyze({ input: { ...input, settings: none } })).response).analysis;
+    expect(vi.mocked(scoreRoles).mock.calls.length).toBe(scored);
+    expect(list(plain.perf)).toEqual(list(plain.perfUnadjusted));
+    expect(list(plain.perfUnadjusted)).toEqual(list(measured.perfUnadjusted));
+    const back = analyzed(session.handle(analyze({ input })).response).analysis;
+    expect(list(back.perf)).toEqual(list(measured.perf));
+    expect(vi.mocked(scoreRoles).mock.calls.length).toBe(scored);
+  });
+
   it("filter-only change does not recompute percentiles", () => {
     const session = createEngineSession();
     analyzed(session.handle(analyze({ snapshot })).response);
@@ -198,20 +212,23 @@ describe("engine session", () => {
     expect([ranks(), poolRanks()]).toEqual([3 * ranked, 2 * pooled]);
   });
 
-  it("rates the leagues once per snapshot and fits the league coefficient with the model: a threshold keeps it", () => {
+  it("rates the leagues once per snapshot and puts the stats in my league with the model: a threshold keeps it", () => {
     const session = createEngineSession();
-    const first = analyzed(session.handle(analyze({ snapshot })).response);
+    const first = analyzed(session.handle(analyze({ snapshot, input: { ...input, myClubUid: 1 } })).response);
     expect([leagueIndexes(), leagueFits()]).toEqual([1, 1]);
     expect(first.snapshot?.leagueStrength).toHaveLength(40);
     expect(first.analysis.perfIn.ATA).toHaveLength(40);
     const moneyball = { ...DEFAULT_ENGINE_SETTINGS.moneyball, minRatio: 3 };
     analyzed(
-      session.handle(analyze({ input: { ...input, settings: { ...DEFAULT_ENGINE_SETTINGS, moneyball } } })).response,
+      session.handle(
+        analyze({ input: { ...input, myClubUid: 1, settings: { ...DEFAULT_ENGINE_SETTINGS, moneyball } } }),
+      ).response,
     );
     expect([leagueIndexes(), leagueFits()]).toEqual([1, 1]);
     analyzed(
-      session.handle(analyze({ input: { ...input, settings: { ...DEFAULT_ENGINE_SETTINGS, poolMinutes: 900 } } }))
-        .response,
+      session.handle(
+        analyze({ input: { ...input, myClubUid: 1, settings: { ...DEFAULT_ENGINE_SETTINGS, poolMinutes: 900 } } }),
+      ).response,
     );
     expect([leagueIndexes(), leagueFits()]).toEqual([1, 2]);
   });

@@ -29,11 +29,7 @@ export const belongsTo = (r: PlayerRecord, clubUid: number | null): boolean =>
 export const contractedTo = (r: PlayerRecord, clubUid: number | null): boolean =>
   clubUid !== null && ((r.club_uid === clubUid && !r.owner) || r.owner_uid === clubUid);
 
-export const FULL_SAMPLE_FLOOR_MINUTES = 900;
-export const FULL_SAMPLE_CEILING_MINUTES = 1800;
-export const FULL_SAMPLE_SHARE_OF_REGULARS = 0.8;
-export const MIN_LEAGUE_REGULARS = 20;
-const REGULARS_QUANTILE = 0.9;
+export const FULL_SAMPLE_MINUTES = 1800;
 
 export interface SampleSizes {
   minutes: Float64Array;
@@ -41,31 +37,8 @@ export interface SampleSizes {
 }
 
 export function sampleSizes(records: readonly PlayerRecord[]): SampleSizes {
-  const senior = seniorFlags(records);
   const minutes = Float64Array.from(records, minutesOf);
-  const keys = records.map((r) => leagueKey(r.division));
-  const byLeague = new Map<string, number[]>();
-  records.forEach((_, i) => {
-    if (!keys[i] || !senior[i] || minutes[i] <= 0) return;
-    const list = byLeague.get(keys[i]);
-    if (list) list.push(minutes[i]);
-    else byLeague.set(keys[i], [minutes[i]]);
-  });
-  const fullByLeague = new Map<string, number>();
-  for (const [key, list] of byLeague) {
-    if (list.length < MIN_LEAGUE_REGULARS) continue;
-    list.sort((a, b) => a - b);
-    const regulars = list[Math.floor(REGULARS_QUANTILE * (list.length - 1))];
-    fullByLeague.set(
-      key,
-      Math.min(
-        FULL_SAMPLE_CEILING_MINUTES,
-        Math.max(FULL_SAMPLE_FLOOR_MINUTES, FULL_SAMPLE_SHARE_OF_REGULARS * regulars),
-      ),
-    );
-  }
-  const full = Float64Array.from(keys, (key) => fullByLeague.get(key) ?? FULL_SAMPLE_CEILING_MINUTES);
-  return { minutes, full };
+  return { minutes, full: new Float64Array(records.length).fill(FULL_SAMPLE_MINUTES) };
 }
 
 export function clubLeague(records: readonly PlayerRecord[], clubUid: number | null): string | null {

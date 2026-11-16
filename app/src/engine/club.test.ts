@@ -131,46 +131,14 @@ describe("hasFoot", () => {
 });
 
 describe("sampleSizes", () => {
-  const league = (division: string, n: number, minutesAt: (k: number) => number) =>
-    Array.from({ length: n }, (_, k) => playerRecord({ division, minutes: minutesAt(k) }));
-  const fullOf = (players: ReturnType<typeof league>, i = 0) => sampleSizes(players).full[i];
-
-  it("a league whose regulars sit around 1100 minutes counts 1047 minutes as a full sample", () => {
+  it("counts 1800 minutes, 20 full games, as a full sample in every league and at any point of the season", () => {
     const players = [
-      ...league("Liga Cedo", 30, (k) => 1000 + k * 4),
       playerRecord({ division: "Liga Cedo", minutes: 1047 }),
+      playerRecord({ division: "Liga Cheia", minutes: 3000 }),
+      playerRecord({ division: "", minutes: 0 }),
     ];
-    expect(fullOf(players)).toBeLessThanOrEqual(1047);
-    expect(sampleSizes(players).minutes[30]).toBeGreaterThanOrEqual(fullOf(players, 30));
-  });
-
-  it("a league at about 3000 minutes asks for 1800", () => {
-    expect(fullOf(league("Liga Cheia", 30, (k) => 2800 + k * 10))).toBe(1800);
-  });
-
-  it("holds the floor of 900 early in the season", () => {
-    expect(fullOf(league("Liga Nova", 30, (k) => 200 + k * 5))).toBe(900);
-  });
-
-  it("scales between the floor and the ceiling at 0.8 of the regulars' 90th percentile", () => {
-    expect(fullOf(league("Liga Meio", 30, () => 2000))).toBe(1600);
-  });
-
-  it("falls back to 1800 for a league under 20 players, no league, and ignores non-senior and unplayed", () => {
-    expect(fullOf(league("Liga Pequena", 19, () => 400))).toBe(1800);
-    expect(fullOf(league("Liga Pequena", 20, () => 400))).toBe(900);
-    expect(fullOf(league("", 30, () => 400))).toBe(1800);
-    const padded = [
-      ...league("Liga B", 19, () => 400),
-      ...Array.from({ length: 10 }, () => playerRecord({ division: "Liga B", minutes: 400, team: "U21" })),
-      ...Array.from({ length: 10 }, () => playerRecord({ division: "Liga B", minutes: 0 })),
-    ];
-    expect(fullOf(padded)).toBe(1800);
-  });
-
-  it("treats leagues apart", () => {
-    const players = [...league("Liga Cedo", 25, () => 300), ...league("Liga Cheia", 25, () => 3000)];
-    const { full } = sampleSizes(players);
-    expect([full[0], full[25]]).toEqual([900, 1800]);
+    const { minutes, full } = sampleSizes(players);
+    expect(Array.from(minutes)).toEqual([1047, 3000, 0]);
+    expect(Array.from(full)).toEqual([1800, 1800, 1800]);
   });
 });

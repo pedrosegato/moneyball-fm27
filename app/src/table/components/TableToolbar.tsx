@@ -31,6 +31,7 @@ interface TableToolbarProps {
   chips?: ReactNode;
   filterBar?: ReactNode;
   criteria?: ReactNode;
+  scoring?: ReactNode;
 }
 
 const rolePicked = (columns: readonly TableColumn[], state: TableColumnState) =>
@@ -51,6 +52,7 @@ export function TableToolbar({
   chips,
   filterBar,
   criteria,
+  scoring,
 }: TableToolbarProps) {
   const { t } = useTranslation("table");
   return (
@@ -69,6 +71,7 @@ export function TableToolbar({
       <fieldset aria-label={t("view.how")} className="flex flex-wrap items-start gap-x-3 pr-4">
         <ColumnGroups state={columnState} actions={columnActions} />
         <div className="ml-auto flex min-h-10 min-w-0 flex-wrap items-center justify-end gap-x-2 gap-y-1 py-1">
+          {scoring}
           {rolePicked(columns, columnState) && <RolePicker />}
           <ValueModeControl mode={mode} onChange={onModeChange} />
           <ColumnsMenu columns={columns} state={columnState} actions={columnActions} />

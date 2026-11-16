@@ -18,7 +18,7 @@ export const table = {
     minutes: {
       abbr: "Min",
       label: "Minutos no escopo",
-      description: "minutos jogados nas competições lidas; quanto mais minutos, mais confiáveis as stats do jogador.",
+      description: "minutos jogados nas competições lidas.",
     },
     rating: {
       abbr: "Nota",
@@ -38,7 +38,7 @@ export const table = {
     },
     leagueStrength: {
       abbr: "Força da liga",
-      label: "Força da liga: CA média dos titulares ({{starters}}), estimada pelo save",
+      label: "Força da liga: CA média dos titulares ({{starters}})",
       description:
         "o nível da liga do jogador, pela habilidade média dos titulares dela; quanto maior, mais forte a liga.",
     },
@@ -87,7 +87,7 @@ export const table = {
     monthsLeft: {
       abbr: "Restante",
       label: "Contrato restante, em meses a partir da data dos dados",
-      description: "quantos meses faltam para o contrato acabar; quanto menos, mais barato tende a ser contratá-lo.",
+      description: "quantos meses faltam para o contrato acabar.",
     },
     ability: {
       abbr: "Hab.",
@@ -115,7 +115,7 @@ export const table = {
       abbr: "Perf.",
       label: "Performance",
       description:
-        "nota das stats da função, de 0 a 100, contra os jogadores que jogam as posições dela. Sem função escolhida, é a melhor função do jogador na posição principal dele. Pesa menos com poucos minutos e já desconta a diferença de força entre a liga do jogador e a sua; quanto mais, melhor.",
+        "nota das stats da função, de 0 a 100, contra os jogadores que jogam as posições dela, com o peso da liga escolhido no Scout. Sem função escolhida, é a melhor função do jogador na posição principal. Abaixo de 1.800 minutos a nota fica mais perto de 50. Quanto mais, melhor.",
     },
     perfRole: {
       abbr: "Função",

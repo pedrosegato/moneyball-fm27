@@ -45,6 +45,7 @@ export interface PlayerTableProps {
   filterBar?: ReactNode;
   filtersPanel?: ReactNode;
   criteria?: ReactNode;
+  scoring?: ReactNode;
   emptyActions?: readonly EmptyAction[];
   emptyDescription?: string;
   defaultSort?: { id: string; desc: boolean };
@@ -75,6 +76,7 @@ export function PlayerTable({
   filterBar,
   filtersPanel,
   criteria,
+  scoring,
   emptyActions = NO_ACTIONS,
   emptyDescription,
   defaultSort,
@@ -175,6 +177,7 @@ export function PlayerTable({
         chips={chips}
         filterBar={filterBar}
         criteria={criteria}
+        scoring={scoring}
       />
       <TableBody
         table={table}

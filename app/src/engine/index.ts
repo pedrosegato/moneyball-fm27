@@ -22,9 +22,9 @@ export function runAnalysis({
   ...scoring
 }: AnalysisInput): AnalysisResult {
   const prepared = prepareSnapshot(applyPeriod(snapshot, period));
-  const { poolMinutes, leagueAdjustment } = scoring.settings;
+  const { poolMinutes } = scoring.settings;
   const display = analyzeDisplay(prepared, { poolMinutes, composites });
-  const model = analyzeModel(prepared, { ...scoring, poolMinutes, leagueAdjustment });
+  const model = analyzeModel(prepared, { ...scoring, poolMinutes, leagueWeighting: scoring.settings.leagueWeighting });
   return {
     ...prepared.result,
     ...display,

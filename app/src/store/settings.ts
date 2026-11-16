@@ -2,9 +2,10 @@ import type { StateCreator } from "zustand";
 import { SCOPES, type Scope } from "@/data/types";
 import { DEFAULT_ENGINE_SETTINGS, type EngineSettings } from "@/engine/analysis/input";
 import type { LeagueFilter } from "@/engine/league";
+import { LEAGUE_WEIGHTINGS } from "@/engine/leagueStrength";
 import { isRecord } from "@/lib/guards";
 import type { AppState } from "./index";
-import { fieldsOf, finiteIn, oneOf, recordOf, text } from "./sanitize";
+import { fieldsOf, finiteIn, oneOf, text } from "./sanitize";
 
 export const THEMES = ["dark", "light"] as const;
 export type Theme = (typeof THEMES)[number];
@@ -38,20 +39,6 @@ export const createSettingsSlice: StateCreator<AppState, [], [], SettingsSlice> 
   updateSettings: (patch) => set((s) => ({ settings: { ...s.settings, ...patch } })),
   resetSettings: () => set({ settings: defaultSettings() }),
 });
-
-export const LEAGUE_WEIGHTS = { min: 0.5, max: 2 } as const;
-
-export const LEAGUE_ADJUSTMENT = { min: 0, max: 3, step: 0.5 } as const;
-
-export const LEAGUE_ADJUSTMENT_STEPS = Array.from(
-  { length: LEAGUE_ADJUSTMENT.max / LEAGUE_ADJUSTMENT.step + 1 },
-  (_, k) => k * LEAGUE_ADJUSTMENT.step,
-);
-
-function restoreLeagueAdjustment(raw: unknown, fallback: number): number {
-  const value = finiteIn(raw, LEAGUE_ADJUSTMENT.min, LEAGUE_ADJUSTMENT.max);
-  return value !== null && LEAGUE_ADJUSTMENT_STEPS.includes(value) ? value : fallback;
-}
 
 interface Limits {
   min: number;
@@ -119,7 +106,6 @@ function restoreEngine(raw: unknown): EngineSettings {
   const r = fieldsOf(raw);
   return {
     poolMinutes: finiteIn(r.poolMinutes, ENGINE_LIMITS.poolMinutes.min, ENGINE_LIMITS.poolMinutes.max) ?? d.poolMinutes,
-    leagueAdjustment: restoreLeagueAdjustment(r.leagueAdjustment, d.leagueAdjustment),
     fairValue: numbersLike(d.fairValue, r.fairValue, {}),
     moneyball: numbersLike(d.moneyball, r.moneyball, ENGINE_LIMITS.moneyball),
     sellKeep: numbersLike(d.sellKeep, r.sellKeep, ENGINE_LIMITS.sellKeep),
@@ -127,7 +113,7 @@ function restoreEngine(raw: unknown): EngineSettings {
       ...numbersLike(d.fit, r.fit, ENGINE_LIMITS.fit),
       leagueFilter: restoreLeagueFilter(fieldsOf(r.fit).leagueFilter, d.fit.leagueFilter),
     },
-    leagueWeights: recordOf(r.leagueWeights, (w) => finiteIn(w, LEAGUE_WEIGHTS.min, LEAGUE_WEIGHTS.max)),
+    leagueWeighting: oneOf(r.leagueWeighting, LEAGUE_WEIGHTINGS) ?? d.leagueWeighting,
   };
 }
 

@@ -35,6 +35,21 @@ describe("Scout", () => {
     expect(appStore.getState().filters.scout).toEqual([]);
   });
 
+  it("picks the league weight of Performance in the toolbar, starting on the measured one", async () => {
+    const user = userEvent.setup();
+    const { controller } = startData(fakeSource(snapshot));
+    renderWithData(<Scout />, controller);
+    const control = await screen.findByRole("radiogroup", { name: "Peso da liga na Performance" });
+    const options = within(control).getAllByRole("radio");
+    expect(options.map((o) => o.textContent)).toEqual(["Sem peso", "Peso medido"]);
+    expect(within(control).getByRole("radio", { name: "Peso medido" })).toBeChecked();
+
+    await user.click(within(control).getByRole("radio", { name: "Sem peso" }));
+    expect(appStore.getState().settings.engine.leagueWeighting).toBe("none");
+    await user.click(within(control).getByRole("radio", { name: "Peso medido" }));
+    expect(appStore.getState().settings.engine.leagueWeighting).toBe("measured");
+  });
+
   it("shows the Atacante preset under a Pos filter on strikers, and the Geral one without it", async () => {
     const { controller } = startData(fakeSource(snapshot));
     renderWithData(<Scout />, controller);

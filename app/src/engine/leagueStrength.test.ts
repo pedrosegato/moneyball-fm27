@@ -1,29 +1,24 @@
 import { beforeAll, describe, expect, it } from "vitest";
-import type { PlayerRecord, Snapshot } from "@/data/types";
+import type { Snapshot } from "@/data/types";
 import { DEFAULT_ENGINE_SETTINGS } from "./analysis/input";
-import { analyzeModel } from "./analysis/model";
-import { prepareSnapshot } from "./analysis/prepare";
 import { minutesOf } from "./club";
 import { defaultActionsPresets } from "./composites";
 import { type AnalysisResult, runAnalysis } from "./index";
 import { leagueKey } from "./league";
 import {
-  adjustedPerformance,
-  adjustedPerformances,
   clubLeagueStrength,
   DEFAULT_LEAGUE_STRENGTH_OPTIONS,
-  leagueCoefficient,
+  leagueFactors,
   leagueStrengthIndex,
   leagueStrengths,
 } from "./leagueStrength";
-import { POS_GROUPS, type PosGroup } from "./positions";
+import { POS_GROUPS } from "./positions";
 import { loadRawSnapshot, missingRawSnapshot } from "./testing/oldEngine";
 import { playerRecord, type RecordParts } from "./testing/records";
 
 const list = (a: ArrayLike<number>) => Array.from(a);
 const starters = (n: number, division: string | null, ca: number, parts: RecordParts = {}) =>
   Array.from({ length: n }, () => playerRecord({ division, ca, minutes: 1000, ...parts }));
-const everyGroup = <T>(value: T) => Object.fromEntries(POS_GROUPS.map((g) => [g, value])) as Record<PosGroup, T>;
 
 describe("leagueStrengthIndex", () => {
   it("defaults to 450 minutes, 15 starters and 10 starters' worth of shrinkage", () => {
@@ -102,125 +97,19 @@ describe("clubLeagueStrength", () => {
   });
 });
 
-function noise(seed: number): () => number {
-  let s = seed >>> 0;
-  return () => {
-    s = (Math.imul(s, 1_664_525) + 1_013_904_223) >>> 0;
-    return s / 2 ** 31 - 1;
-  };
-}
+describe("leagueFactors", () => {
+  const strength = Float64Array.of(145, 108.75, 87, NaN);
 
-describe("leagueCoefficient", () => {
-  const STRENGTHS = [90, 105, 120, 135, 150];
-
-  function planted(n: number, parts: RecordParts = {}) {
-    const next = noise(7);
-    const players: PlayerRecord[] = [];
-    const strength: number[] = [];
-    const perf: number[] = [];
-    for (let k = 0; k < n; k++) {
-      const ca = 80 + ((k * 37) % 100);
-      const s = STRENGTHS[k % STRENGTHS.length];
-      players.push(playerRecord({ ca, minutes: 1000, ...parts }));
-      strength.push(s);
-      perf.push(40 + 0.8 * ca - 2 * s + 5 * next());
-    }
-    return { players, strength, perf, groups: players.map((): PosGroup => "ATA") };
-  }
-
-  const fitModel = ({ players, strength, perf, groups }: ReturnType<typeof planted>, poolMinutes = 300) =>
-    leagueCoefficient(players, everyGroup(perf), strength, groups, { poolMinutes });
-
-  it("coefficient recovers a planted league effect on synthetic data", () => {
-    const coefficient = fitModel(planted(400));
-    expect(coefficient).toBeGreaterThan(-2.2);
-    expect(coefficient).toBeLessThan(-1.8);
+  it("is the player's league strength over the strongest league's", () => {
+    expect(list(leagueFactors(strength))).toEqual([1, 0.75, 0.6, 0.6]);
   });
 
-  it("pools every group into one fit", () => {
-    const atk = planted(200);
-    const def = planted(200);
-    const groups = [...atk.groups, ...def.groups.map((): PosGroup => "ZAG")];
-    const players = [...atk.players, ...def.players];
-    const strength = [...atk.strength, ...def.strength];
-    const perfAta = [...atk.perf, ...def.perf.map(() => NaN)];
-    const perfZag = [...atk.perf.map(() => NaN), ...def.perf];
-    const perf = { ...everyGroup([] as number[]), ATA: perfAta, ZAG: perfZag };
-    const pooled = leagueCoefficient(players, perf, strength, groups, { poolMinutes: 300 });
-    expect(pooled).toBeGreaterThan(-2.2);
-    expect(pooled).toBeLessThan(-1.8);
+  it("counts an unknown league as the weakest one", () => {
+    expect(leagueFactors(strength)[3]).toBe(leagueFactors(strength)[2]);
   });
 
-  it("fewer than 50 rows get no adjustment", () => {
-    expect(fitModel(planted(49))).toBe(0);
-    expect(fitModel(planted(50))).not.toBe(0);
-  });
-
-  it("fits on the pool players with a Performance, a strength and a CA", () => {
-    const clean = planted(400);
-    const noisy = planted(400);
-    const next = noise(11);
-    for (let k = 0; k < 200; k++) {
-      const minutes = k % 4 === 0 ? 200 : 1000;
-      noisy.players.push(playerRecord({ ca: k % 4 === 1 ? 0 : 120, minutes }));
-      noisy.strength.push(k % 4 === 2 ? NaN : 150);
-      noisy.perf.push(k % 4 === 3 ? NaN : 100 + 50 * next());
-      noisy.groups.push("ATA");
-    }
-    expect(fitModel(noisy)).toEqual(fitModel(clean));
-
-    expect(fitModel(noisy, 100)).not.toBeCloseTo(fitModel(clean), 3);
-  });
-
-  it("players who all share one league get no adjustment", () => {
-    const one = planted(200);
-    one.strength.fill(120);
-    expect(fitModel(one)).toBe(0);
-  });
-});
-
-describe("adjustedPerformance", () => {
-  it("adjusted equals perf for players in my league", () => {
-    expect(adjustedPerformance(63, 124, 124, -1.3)).toBe(63);
-    expect(adjustedPerformance(63, 124, 124, 0.7)).toBe(63);
-  });
-
-  it("stronger league raises adjusted perf when coef < 0", () => {
-    expect(adjustedPerformance(60, 150, 124, -1)).toBe(86);
-    expect(adjustedPerformance(60, 100, 124, -1)).toBe(36);
-  });
-
-  it("is not clamped: sorting and thresholds see the full value", () => {
-    expect(adjustedPerformance(90, 150, 124, -1)).toBe(116);
-    expect(adjustedPerformance(10, 100, 124, -1)).toBe(-14);
-  });
-
-  it("keeps the plain value when the player's or my league's strength is unknown", () => {
-    expect([
-      adjustedPerformance(60, NaN, 124, -1),
-      adjustedPerformance(60, 130, NaN, -1),
-      adjustedPerformance(NaN, 130, 124, -1),
-    ]).toEqual([60, 60, NaN]);
-  });
-});
-
-describe("adjustedPerformances", () => {
-  const perfBase = everyGroup(Float32Array.of(60, 60, 60, NaN));
-  const strength = Float64Array.of(130.5, 124, NaN, 150);
-
-  it("applies one coefficient to every group, unrounded", () => {
-    const adjusted = adjustedPerformances(perfBase, strength, 124, -1);
-    expect(list(adjusted.ATA)).toEqual([66.5, 60, 60, NaN]);
-    expect(list(adjusted.GK)).toEqual(list(adjusted.ATA));
-  });
-
-  it("leaves Performance alone when my league has no strength", () => {
-    const adjusted = adjustedPerformances(perfBase, strength, null, -1);
-    expect(list(adjusted.ZAG)).toEqual([60, 60, 60, NaN]);
-  });
-
-  it("a league weight of 0 is no adjustment", () => {
-    expect(list(adjustedPerformances(perfBase, strength, 124, 0).MC)).toEqual([60, 60, 60, NaN]);
+  it("leaves every player alone when no league has a strength", () => {
+    expect(list(leagueFactors(Float64Array.of(NaN, NaN)))).toEqual([1, 1]);
   });
 });
 
@@ -239,7 +128,7 @@ describe.skipIf(missingRawSnapshot("league strength"))("league strength on the f
     result = runAnalysis(input);
   }, 120_000);
 
-  it("rates MFC's league and the save's leagues, and fits one coefficient", () => {
+  it("rates MFC's league and the save's leagues, and the league weight moves Performance", () => {
     const index = leagueStrengthIndex(snapshot.players);
     const byStrength = [...index].sort((a, b) => b[1].strength - a[1].strength);
     const show = ([key, { strength, starters }]: (typeof byStrength)[number]) =>
@@ -252,14 +141,6 @@ describe.skipIf(missingRawSnapshot("league strength"))("league strength on the f
     expect(result.myLeagueStrength).toBe(index.get(leagueKey("Brasileirão Assaí Série A"))!.strength);
     expect(index.size).toBeGreaterThan(100);
 
-    const { poolMinutes } = DEFAULT_ENGINE_SETTINGS;
-    const model = analyzeModel(prepareSnapshot(snapshot), {
-      poolMinutes,
-      leagueAdjustment: DEFAULT_ENGINE_SETTINGS.leagueAdjustment,
-      myClubUid: snapshot.my_clubs[0].uid,
-    });
-    console.info(`Performance points per point of league strength, at equal CA: ${model.leagueCoefficient.toFixed(3)}`);
-    expect(model.leagueCoefficient).toBeLessThan(0);
     const moved = list(result.perf).filter((v, i) => Number.isFinite(v) && v !== result.perfUnadjusted[i]).length;
     console.info(`players whose Performance the league weight moves: ${moved}`);
     expect(moved).toBeGreaterThan(1000);
@@ -270,9 +151,9 @@ describe.skipIf(missingRawSnapshot("league strength"))("league strength on the f
       .sort((a, b) => Math.abs(b.adj - b.perf) - Math.abs(a.adj - a.perf));
     const line = ({ r, i, perf, adj }: (typeof examples)[number]) =>
       `${r.name} (${POS_GROUPS[result.group[i]]}, ${r.division}, força ${result.leagueStrength[i].toFixed(1)}): ${perf} → ${adj}`;
-    const up = examples.filter((e) => e.adj > e.perf).slice(0, 3);
     const down = examples.filter((e) => e.adj < e.perf).slice(0, 3);
-    console.info(`raised most:\n${up.map(line).join("\n")}\nlowered most:\n${down.map(line).join("\n")}`);
-    expect(up.length + down.length).toBe(6);
+    console.info(`lowered most:\n${down.map(line).join("\n")}`);
+    expect(down).toHaveLength(3);
+    expect(examples.every((e) => e.adj <= e.perf + 1e-4)).toBe(true);
   });
 });

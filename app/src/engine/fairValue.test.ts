@@ -174,7 +174,7 @@ describe.skipIf(missingOldEngineFixtures("fair value"))("fair value on the fixtu
     const { records } = fx;
     const prepared = prepareSnapshot(snapshotOf(records));
     const { groups } = prepared;
-    const { perfIn } = analyzeModel(prepared, { poolMinutes: 300, leagueAdjustment: 0, myClubUid: null });
+    const { perfIn } = analyzeModel(prepared, { poolMinutes: 300, myClubUid: null });
     const perf = Float32Array.from(groups, (g, i) => perfIn[g][i]);
 
     const model = fitValueModel(records, perf, groups);

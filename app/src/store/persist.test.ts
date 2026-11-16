@@ -45,7 +45,7 @@ describe("hydrateStore", () => {
       `{"theme":"light","pollSeconds":"10","currency":"USD","injected":"<script>","scope":"league",
         "engine":{"poolMinutes":450,"moneyball":{"minRatio":3,"minPerf":"x","excludeClubUid":5},
           "fit":{"lvl":6,"leagueFilter":{"kind":"league","key":"BRA1"}},
-          "leagueWeights":{"Série B":0.8,"Ruim":-1,"__proto__":3}}}`,
+          "leagueWeighting":"planilha","leagueWeights":{"Série B":0.8}}}`,
     );
     const { settings } = await hydrated();
     expect(settings.theme).toBe("light");
@@ -60,8 +60,8 @@ describe("hydrateStore", () => {
       lvl: 6,
       leagueFilter: { kind: "league", key: "BRA1" },
     });
-    expect(Object.entries(settings.engine.leagueWeights)).toEqual([["Série B", 0.8]]);
-    expect(Object.getPrototypeOf(settings.engine.leagueWeights)).toBe(Object.prototype);
+    expect(settings.engine.leagueWeighting).toBe(DEFAULT_ENGINE_SETTINGS.leagueWeighting);
+    expect(settings.engine).not.toHaveProperty("leagueWeights");
   });
 
   it("ignores the currency and rates saved before money followed the game", async () => {
@@ -77,23 +77,6 @@ describe("hydrateStore", () => {
     expect((await hydrated()).settings.pollSeconds).toBe(5);
     save("settings", { pollSeconds: 30 });
     expect((await hydrated()).settings.pollSeconds).toBe(30);
-  });
-
-  it("restores the league weight on its steps only, and defaults it for a save made before it existed", async () => {
-    save("settings", { engine: { poolMinutes: 450 } });
-    expect((await hydrated()).settings.engine.leagueAdjustment).toBe(1);
-    for (const [saved, restored] of [
-      [0, 0],
-      [2.5, 2.5],
-      [3, 3],
-      [0.3, 1],
-      [3.5, 1],
-      [-1, 1],
-      ["2", 1],
-    ] as const) {
-      save("settings", { engine: { leagueAdjustment: saved } });
-      expect((await hydrated()).settings.engine.leagueAdjustment, String(saved)).toBe(restored);
-    }
   });
 
   it("restores an engine option only within the range its editor allows", async () => {
@@ -281,21 +264,10 @@ describe("hydrateStore", () => {
     expect(cart.targets).toEqual({ "301344": 5, "42": 0 });
   });
 
-  it("keeps only league weights the editor could have made (×0,5 to ×2)", async () => {
-    save("settings", {
-      engine: {
-        leagueWeights: {
-          "premier league": 1.2,
-          eredivisie: 0.5,
-          "liga zero": 0,
-          "liga cem": 100,
-          "serie a": 2.01,
-          x: "1",
-        },
-      },
-    });
+  it("keeps the league weight picked in Scout", async () => {
+    save("settings", { engine: { leagueWeighting: "none" } });
     const { settings } = await hydrated();
-    expect(settings.engine.leagueWeights).toEqual({ "premier league": 1.2, eredivisie: 0.5 });
+    expect(settings.engine.leagueWeighting).toBe("none");
   });
 
   it("restores each club's lineup, dropping unknown formations, slots and picks", async () => {

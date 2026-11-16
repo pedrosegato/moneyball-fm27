@@ -13,7 +13,7 @@ import { type Composite, defaultActionsPresets, shrinkSmallSamples } from "./com
 import { DEFAULT_VALUE_MODEL_OPTIONS } from "./fairValue";
 import { type AnalysisResult, runAnalysis } from "./index";
 import { leagueKey } from "./league";
-import { leagueCoefficient, leagueStrengthIndex } from "./leagueStrength";
+import { type LeagueWeighting, leagueStrengthIndex } from "./leagueStrength";
 import { DEFAULT_MONEYBALL_OPTIONS } from "./moneyball";
 import { rankPercentile, referenceOf } from "./percentiles";
 import { mainGroup, POS_GROUPS, POS_NAMES, type PosGroup } from "./positions";
@@ -44,7 +44,6 @@ function modelOutputs(r: AnalysisResult) {
     moneyball: bytes(r.moneyball),
     fair: bytes(r.fair),
     valueRatio: bytes(r.valueRatio),
-    rank: bytes(r.rank),
     perf: bytes(r.perf),
     perfIn: POS_GROUPS.map((g) => bytes(r.perfIn[g])),
     abilityPct: bytes(r.abilityPct),
@@ -62,19 +61,17 @@ const withoutCa = (snapshot: Snapshot): Snapshot => ({
 
 describe("DEFAULT_ENGINE_SETTINGS", () => {
   it("holds every module's old defaults, with one percentile pool for all of them", () => {
-    const { poolMinutes, fairValue, moneyball, sellKeep, fit, leagueWeights } = DEFAULT_ENGINE_SETTINGS;
+    const { poolMinutes, fairValue, moneyball, sellKeep, fit, leagueWeighting } = DEFAULT_ENGINE_SETTINGS;
     expect(poolMinutes).toBe(300);
     expect({ ...fairValue, poolMinutes }).toEqual(DEFAULT_VALUE_MODEL_OPTIONS);
     expect({ ...moneyball, poolMinutes, excludeClubUid: null }).toEqual(DEFAULT_MONEYBALL_OPTIONS);
     expect({ ...sellKeep, poolMinutes }).toEqual(DEFAULT_SELL_KEEP_OPTIONS);
     expect({ ...fit, poolMinutes }).toEqual(DEFAULT_FIT_OPTIONS);
-    expect(leagueWeights).toEqual({});
+    expect(leagueWeighting).toBe("measured");
 
     expect([fairValue, moneyball, sellKeep, fit].filter((o) => "poolMinutes" in o)).toEqual([]);
     expect("excludeClubUid" in moneyball).toBe(false);
-    expect([DEFAULT_ENGINE_SETTINGS, fairValue, moneyball, sellKeep, fit, leagueWeights].every(Object.isFrozen)).toBe(
-      true,
-    );
+    expect([DEFAULT_ENGINE_SETTINGS, fairValue, moneyball, sellKeep, fit].every(Object.isFrozen)).toBe(true);
   });
 });
 
@@ -115,14 +112,10 @@ describe("runAnalysis populations", () => {
     expect(run().perfIn.ATA[BEST]).toBe(run().perf[BEST]);
   });
 
-  it("hands poolMinutes to Sell/Keep and Rank", () => {
+  it("hands poolMinutes to Sell/Keep", () => {
     const tooFew = (r: AnalysisResult) => r.sellKeep[unplayed.uid].reasons[0];
     expect(tooFew(run())).toEqual({ kind: "tooFewMinutes", minMinutes: 300, ability: null });
     expect(tooFew(run({ ...DEFAULT_ENGINE_SETTINGS, poolMinutes: 900 }))).toMatchObject({ minMinutes: 900 });
-
-    expect([run().rank[0], run().rank[1]]).toEqual([7 * 1.15, 7 * 1.15]);
-    const strict = run({ ...DEFAULT_ENGINE_SETTINGS, poolMinutes: 900, leagueWeights: { "premier league": 1 } });
-    expect([strict.rank[0], strict.rank[1]]).toEqual([7, NaN]);
   });
 
   it("ranks composites among the group's pool, with the keeper flags for one-sided ones", () => {
@@ -320,41 +313,48 @@ describe("Performance adjusted to my league", () => {
     }),
   );
   const snapshot = snapshotOf(players);
-  const run = (s: Snapshot = snapshot, myClubUid: number | null = MY, leagueAdjustment = 1) =>
+  const run = (s: Snapshot = snapshot, myClubUid: number | null = MY) =>
     runAnalysis({
       snapshot: s,
       composites: [],
       myClubUid,
-      settings: { ...DEFAULT_ENGINE_SETTINGS, leagueAdjustment },
+      settings: DEFAULT_ENGINE_SETTINGS,
     });
   const result = run();
   const inLeague = (division: string) => players.flatMap((r, i) => (r.division === division ? [i] : []));
 
-  it("a league weight of 0 gives the model outputs of a save without league strength; a weight of 1 moves them", () => {
+  it("a save without league strength leaves Performance as it is; with strengths the league weight moves it", () => {
     const absent = run(withoutCa(snapshot));
     expect(absent.myLeagueStrength).toBeNull();
     expect(list(absent.perf)).toEqual(list(absent.perfUnadjusted));
 
     expect(result.moneyball.length).toBeGreaterThan(0);
     expect(Object.keys(result.sellKeep).length).toBe(12);
-    expect(modelOutputs(run(snapshot, MY, 0))).toStrictEqual(modelOutputs(absent));
     expect(modelOutputs(result)).not.toStrictEqual(modelOutputs(absent));
   });
 
-  it("orders the players again after the league weight, so Performance stays a 0–100 rank", () => {
-    const mean = (r: AnalysisResult, ids: number[]) => {
-      const valued = ids.filter((i) => Number.isFinite(r.perf[i]));
-      return valued.reduce((sum, i) => sum + r.perf[i], 0) / valued.length;
-    };
-    const strong = inLeague("Premier League");
-    const [off, one, two, three] = [0, 1, 2, 3].map((m) => run(snapshot, MY, m));
-    expect(list(off.perf)).toEqual(list(off.perfUnadjusted));
-    for (const r of [one, two, three])
-      expect([...r.perf].every((v) => Number.isNaN(v) || (v >= 0 && v <= 100))).toBe(true);
-    const moved = (r: AnalysisResult) => mean(r, strong) - mean(off, strong);
-    expect(moved(one)).not.toBe(0);
-    expect(Math.sign(moved(three))).toBe(Math.sign(moved(one)));
-    expect(Math.abs(moved(three))).toBeGreaterThanOrEqual(Math.abs(moved(one)));
+  it("weighs Performance by the league: the strongest league keeps it, the others lose in proportion to their strength", () => {
+    const one = result;
+    const known = list(one.leagueStrength).filter(Number.isFinite);
+    const top = Math.max(...known);
+    const bottom = Math.min(...known);
+    const ratio = (i: number) => (Number.isFinite(one.leagueStrength[i]) ? one.leagueStrength[i] : bottom) / top;
+    const valued = players.flatMap((_, i) => (Number.isFinite(one.perfUnadjusted[i]) ? [i] : []));
+    expect(valued.length).toBeGreaterThan(100);
+    for (const i of valued) expect(one.perf[i]).toBeCloseTo(one.perfUnadjusted[i] * ratio(i), 3);
+    const strongest = valued.filter((i) => one.leagueStrength[i] === top);
+    expect(strongest.length).toBeGreaterThan(0);
+    for (const i of strongest) expect(one.perf[i]).toBeCloseTo(one.perfUnadjusted[i], 5);
+  });
+
+  const weighed = (leagueWeighting: LeagueWeighting) =>
+    runAnalysis({ snapshot, composites: [], myClubUid: MY, settings: { ...DEFAULT_ENGINE_SETTINGS, leagueWeighting } });
+
+  it("with no league weight, Performance is the one before the weight", () => {
+    const none = weighed("none");
+    expect(list(none.perf)).toEqual(list(none.perfUnadjusted));
+    expect(list(none.perfUnadjusted)).toEqual(list(result.perfUnadjusted));
+    expect(list(none.perf)).not.toEqual(list(result.perf));
   });
 
   it("gives each player his league's strength and the analysis my league's", () => {
@@ -374,10 +374,10 @@ describe("Performance adjusted to my league", () => {
     expect(Math.sign(shift("Premier League") - shift(SERIE_A))).not.toBe(0);
   });
 
-  it("without a club there is no league of mine, so Performance is not adjusted", () => {
+  it("without a club there is no league of mine, and Performance still carries every player's league weight", () => {
     const anon = run(snapshot, null);
     expect(anon.myLeagueStrength).toBeNull();
-    expect(list(anon.perf)).toEqual(list(anon.perfUnadjusted));
+    expect(list(anon.perf)).toEqual(list(result.perf));
     expect(list(anon.leagueStrength)).toEqual(list(result.leagueStrength));
   });
 
@@ -395,11 +395,10 @@ describe("Performance adjusted to my league", () => {
     expect(list(strong).flatMap((v, k) => (v ? [k] : []))).toEqual(inLeague("Premier League"));
   });
 
-  it("shrinks the small samples in Performance but fits the league coefficient on the unshrunk one", () => {
+  it("shrinks the small samples in Performance", () => {
     const prepared = prepareSnapshot(snapshot);
     const model = analyzeModel(prepared, {
       poolMinutes: DEFAULT_ENGINE_SETTINGS.poolMinutes,
-      leagueAdjustment: 1,
       myClubUid: MY,
     });
     const poolMinutes = DEFAULT_ENGINE_SETTINGS.poolMinutes;
@@ -414,20 +413,14 @@ describe("Performance adjusted to my league", () => {
     for (const i of regular) {
       expect(model.perfBase.ATA[i]).toBeCloseTo(50 + (unshrunk.ATA[i] - 50) * Math.min(1, 1000 / full[i]), 4);
     }
-    const expected = leagueCoefficient(prepared.records, unshrunk, prepared.result.leagueStrength, prepared.groups, {
-      poolMinutes,
-    });
-    expect(model.leagueCoefficient).toBe(expected);
   });
 
   it("is fitted with the model: the percentiles, Performance and the adjustment come from one stage", () => {
     const prepared = prepareSnapshot(snapshot);
     const model = analyzeModel(prepared, {
       poolMinutes: DEFAULT_ENGINE_SETTINGS.poolMinutes,
-      leagueAdjustment: 1,
       myClubUid: MY,
     });
-    expect(model.leagueCoefficient).not.toBe(0);
     expect(model.myLeagueStrength).toBe(result.myLeagueStrength);
     expect(list(model.perfBase.ATA)).toEqual(list(result.perfUnadjusted));
     expect(list(model.perfIn.ATA)).toEqual(list(result.perfIn.ATA));
@@ -470,7 +463,6 @@ describe.skipIf(missingRawSnapshot("runAnalysis"))("runAnalysis on the fixture",
       result.ability,
       result.vsAge,
       result.rating,
-      result.rank,
       result.abilityPct,
       result.leagueStrength,
     ];
@@ -486,10 +478,9 @@ describe.skipIf(missingRawSnapshot("runAnalysis"))("runAnalysis on the fixture",
   });
 
   it("role scores on the fixture: Central Pragmático spans 0–100 among pool centre-backs, keepers have no outfield role, and 90% of pool outfielders with full detail have a best role", () => {
-    const { poolMinutes, leagueAdjustment } = DEFAULT_ENGINE_SETTINGS;
+    const { poolMinutes } = DEFAULT_ENGINE_SETTINGS;
     const prepared = prepareSnapshot(snapshot);
-    const model = analyzeModel(prepared, { poolMinutes, leagueAdjustment, myClubUid: mfc });
-    const roleScores = model.roles;
+    const roleScores = scoreRoles(roleScoringInput(prepared, poolMinutes));
     const pool = poolFlags(snapshot.players, poolMinutes);
     const group = list(result.group).map((g) => POS_GROUPS[g]);
     const ncb = ROLES.findIndex((r) => r.id === "ip:29");
@@ -566,29 +557,19 @@ describe.skipIf(missingRawSnapshot("runAnalysis"))("runAnalysis on the fixture",
       expect(compared).toBeGreaterThan(100_000);
       expect(mismatches.slice(0, 10)).toEqual([]);
     });
-
-    it("keeps at least seven tenths of the old Moneyball list", () => {
-      const want = golden.moneyball.rows.map((r) => Number(r.uid));
-      const listed = new Set(result.moneyball);
-      const common = want.filter((uid) => listed.has(uid)).length;
-      console.info(`Moneyball: ${result.moneyball.length} listed, golden ${want.length}, ${common} in common`);
-      expect(want).toHaveLength(349);
-      expect(common).toBeGreaterThanOrEqual(0.7 * want.length);
-    });
   });
 
   it("the models give today's numbers: Performance shrunk by minutes and weighted by league, every other model output follows it", () => {
     const TODAY = {
-      moneyball: "9ea5c242ab18ee1661afecec1c5d299a9897040b14bfebc0f83881f6085d2e0d",
-      fair: "ace6c7b3811c46f87d13a27727a2dbb9de990f4a99f619f1c2d70c99443abc3c",
-      valueRatio: "4e92c30ac64be9c490202dbc0466968b12f80b5917d3a0a11cb79a7df966240d",
-      rank: "c053ce15f76c7db6eef1521327ebc6c4875428545f0c4e08943e86ea2778abd1",
-      perf: "7da9e98ed579ec668beb4cb0a9331cac44e9c5c9184b024df2c2515b6e127b8e",
-      perfIn: "0ee15fc6642a7057dc366beff844c8c7bacc84d273d30c2d4916d5ea6e9aa580",
+      moneyball: "9b6683e9fd324c936a4a070c5f93e594647cc8b78e6c73bcc53311f8ccb64996",
+      fair: "28b5285cc2d102315a714e2faa2120108c33090854884114d04d91dec0b0abd9",
+      valueRatio: "5cbf9e352e1584e40ca117d97d705df1754988c064930ade4676eee438292c94",
+      perf: "b1f263263ffcecf56cffa315c0f53d9bdc8acec3f113719d09dfb1323404ab6e",
+      perfIn: "805b7c5499db27ba3bcdb12e0320462c898f9ed7d27d8ff057fe3e22ac5f5c20",
       abilityPct: "4e67d3d1e2e62f6292217626947abf7173c51537bb1b7670b08c306c959e4b00",
-      statsVsAbility: "b9e004d3b98eb1270d3f6d4f92f17457d1da62ae610b56f7c0c27a04140de0a6",
-      sellKeep: "e0b67155da680d0f11419dc8d5c465bab833487eec5b17be9aae5e746ed536e8",
-      fit: "feb7cd3cbe757fb93a28e7b8961a675374ccfcca1029c51ac31c1b2d963b1c66",
+      statsVsAbility: "3560be1389a030dc96bef4014522ef8085129b5585c9773707d988c5ca179ef8",
+      sellKeep: "634fdf2cb3a930975ce74542e3460281d9ba66b945cc77975c8f986e1846c0a8",
+      fit: "c3670c90fafe2a9b3c4d6e2a4221181e167623636c56eb6592e7f311427e578a",
       lineup: "7a86b04400888f4d4e241dba44aedc894cf14bec4eeb67c5a4719dd415ce4b1b",
     };
     const outputs: Record<keyof typeof TODAY, unknown> = modelOutputs(result);
@@ -596,20 +577,19 @@ describe.skipIf(missingRawSnapshot("runAnalysis"))("runAnalysis on the fixture",
     expect(Object.fromEntries(Object.entries(outputs).map(([k, v]) => [k, digest(v)]))).toEqual(TODAY);
   });
 
-  it("a league weight of 0 gives the outputs of a save without league strength on the fixture", () => {
+  it("a save without league strength on the fixture has no league weight", () => {
     const absent = runAnalysis({ ...input, snapshot: withoutCa(snapshot) });
-    const off = runAnalysis({ ...input, settings: { ...DEFAULT_ENGINE_SETTINGS, leagueAdjustment: 0 } });
     expect(result.myLeagueStrength).not.toBeNull();
     expect(absent.myLeagueStrength).toBeNull();
-    expect(modelOutputs(off)).toStrictEqual(modelOutputs(absent));
+    expect(list(absent.perf)).toEqual(list(absent.perfUnadjusted));
   });
 
-  it("without a club, has no lineup, fit or Sell/Keep, and no league weight on Performance", () => {
+  it("without a club, has no lineup, fit or Sell/Keep, and Performance keeps the league weight", () => {
     const anon = runAnalysis({ ...input, myClubUid: null });
     expect(anon.lineup.xi.every((i) => i === null)).toBe(true);
     expect(anon.fit.every((rows) => rows.length === 0)).toBe(true);
     expect(anon.sellKeep).toEqual({});
-    expect(list(anon.perf)).toEqual(list(result.perfUnadjusted));
+    expect(list(anon.perf)).toEqual(list(result.perf));
     expect(anon.moneyball.length).toBeGreaterThan(0);
   });
 });
