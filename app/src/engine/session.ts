@@ -1,0 +1,178 @@
+import type { Snapshot } from "@/data/types";
+import { messageOf } from "@/lib/errors";
+import { analysisColumns } from "./analysis/columns";
+import { analyzeDisplay, type DisplayAnalysis } from "./analysis/display";
+import type { AnalysisInput } from "./analysis/input";
+import { analyzeModel, type ModelAnalysis } from "./analysis/model";
+import { type PreparedSnapshot, prepareSnapshot, type SnapshotAnalysis } from "./analysis/prepare";
+import { type RoleAnalysis, viewRoles } from "./analysis/roles";
+import { type ScoreAnalysis, scorePlayers } from "./analysis/score";
+import { type SquadRoleAnalysis, squadRoles } from "./analysis/squadRoles";
+import { poolFlags } from "./club";
+import { applyPeriod, CURRENT_SEASON, type Period } from "./period";
+import { applyFilters, type Columns, type FilterSpec } from "./universe";
+
+export type AnalysisRequest = Omit<AnalysisInput, "snapshot">;
+
+export type EngineRequest =
+  | { id: number; type: "analyze"; snapshotId: number; snapshot?: Snapshot; input: AnalysisRequest }
+  | { id: number; type: "filter"; snapshotId: number; filters: readonly FilterSpec[] };
+
+export type EngineResponse =
+  | {
+      id: number;
+      type: "analyze";
+      ok: true;
+      snapshotId: number;
+      snapshot?: SnapshotAnalysis;
+      analysis: DisplayAnalysis & ScoreAnalysis & RoleAnalysis & SquadRoleAnalysis;
+    }
+  | { id: number; type: "filter"; ok: true; mask: Uint8Array }
+  | { id: number; type: EngineRequest["type"]; ok: false; error: string; loaded: number | null };
+
+export interface EngineSession {
+  handle(request: EngineRequest): { response: EngineResponse; transfer: Transferable[] };
+}
+
+function transferableCopy<T>(value: T, transfer: Transferable[]): T {
+  if (ArrayBuffer.isView(value)) {
+    const copy = (value as unknown as Uint8Array).slice();
+    transfer.push(copy.buffer);
+    return copy as T;
+  }
+  if (Array.isArray(value)) return value.map((v) => transferableCopy(v, transfer)) as T;
+  if (value !== null && typeof value === "object") {
+    return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, transferableCopy(v, transfer)])) as T;
+  }
+  return value;
+}
+
+interface Loaded {
+  id: number;
+  snapshot: Snapshot;
+  period: Period;
+  prepared: PreparedSnapshot;
+  delivered: boolean;
+}
+
+export function createEngineSession(): EngineSession {
+  let loaded: Loaded | null = null;
+  let display: { key: string; analysis: DisplayAnalysis } | null = null;
+  let model: { key: string; analysis: ModelAnalysis } | null = null;
+  let scores: { key: string; analysis: ScoreAnalysis } | null = null;
+  let squad: { key: string; analysis: SquadRoleAnalysis } | null = null;
+  let columns: Columns | null = null;
+
+  function holding(snapshotId: number): Loaded {
+    if (loaded?.id !== snapshotId) throw new Error(`snapshot ${snapshotId} is not loaded`);
+    return loaded;
+  }
+
+  function analyze({ snapshotId, snapshot, input }: Extract<EngineRequest, { type: "analyze" }>) {
+    const period = input.period ?? CURRENT_SEASON;
+    if (snapshot) {
+      loaded = display = model = scores = squad = columns = null;
+      const prepared = prepareSnapshot(applyPeriod(snapshot, period));
+      loaded = { id: snapshotId, snapshot, period, prepared, delivered: false };
+    }
+    const held = holding(snapshotId);
+    if (held.period !== period) {
+      display = model = scores = squad = columns = null;
+      held.prepared = prepareSnapshot(applyPeriod(held.snapshot, period));
+      held.period = period;
+      held.delivered = false;
+    }
+    const { prepared } = held;
+    const { poolMinutes, leagueAdjustment } = input.settings;
+    const { composites, myClubUid } = input;
+    const displayKey = JSON.stringify([poolMinutes, composites]);
+    const nextDisplay =
+      display?.key === displayKey
+        ? display
+        : { key: displayKey, analysis: analyzeDisplay(prepared, { poolMinutes, composites }) };
+    const modelKey = JSON.stringify([poolMinutes, leagueAdjustment, myClubUid]);
+    const nextModel =
+      model?.key === modelKey
+        ? model
+        : {
+            key: modelKey,
+            analysis: analyzeModel(prepared, { poolMinutes, leagueAdjustment, myClubUid }),
+          };
+    const scoresKey = JSON.stringify([modelKey, input.settings, input.lineup ?? null]);
+    const nextScores =
+      scores?.key === scoresKey
+        ? scores
+        : { key: scoresKey, analysis: scorePlayers(prepared, nextModel.analysis, input) };
+    const nextSquad =
+      squad?.key === modelKey
+        ? squad
+        : {
+            key: modelKey,
+            analysis: {
+              squadRoles: squadRoles(
+                prepared.records,
+                nextModel.analysis.roles,
+                myClubUid,
+                poolFlags(prepared.records, poolMinutes),
+              ),
+            },
+          };
+    const analysis = {
+      ...nextDisplay.analysis,
+      ...nextScores.analysis,
+      ...viewRoles(prepared.records, prepared.groups, nextModel.analysis.roles, input.role ?? null),
+      ...nextSquad.analysis,
+    };
+    [display, model, scores, squad, columns] = [
+      nextDisplay,
+      nextModel,
+      nextScores,
+      nextSquad,
+      analysisColumns(prepared, analysis),
+    ];
+    const first = !held.delivered;
+    held.delivered = true;
+    return { snapshot: first ? prepared.result : undefined, analysis };
+  }
+
+  function filter({ snapshotId, filters }: Extract<EngineRequest, { type: "filter" }>): Uint8Array {
+    const { prepared } = holding(snapshotId);
+    if (!columns) throw new Error(`snapshot ${snapshotId} has no analysis to filter`);
+    return applyFilters(prepared.records, columns, filters);
+  }
+
+  return {
+    handle(request) {
+      try {
+        if (request.type === "filter") {
+          const mask = filter(request);
+          return { response: { id: request.id, type: "filter", ok: true, mask }, transfer: [mask.buffer] };
+        }
+        const { snapshot, analysis } = analyze(request);
+        const transfer: Transferable[] = [];
+        return {
+          response: {
+            id: request.id,
+            type: "analyze",
+            ok: true,
+            snapshotId: request.snapshotId,
+            snapshot: snapshot && transferableCopy(snapshot, transfer),
+            analysis: transferableCopy(analysis, transfer),
+          },
+          transfer,
+        };
+      } catch (e) {
+        return {
+          response: {
+            id: request.id,
+            type: request.type,
+            ok: false,
+            error: messageOf(e),
+            loaded: loaded?.id ?? null,
+          },
+          transfer: [],
+        };
+      }
+    },
+  };
+}
