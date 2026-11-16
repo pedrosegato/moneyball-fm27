@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useFilterableTable } from "@/filters/hooks/useFilterableTable";
 import { FILTER_TABLE } from "@/store/filters";
 import { useAppStore, useMoney } from "@/store/index";
-import { useAnalyzing, useData } from "@/store/useData";
+import { useBusy, useData } from "@/store/useData";
 import { poolLabel } from "@/table/columns/labels";
 import { usePlayerColumns } from "@/table/hooks/usePlayerColumns";
 import { GraphsToolbar } from "./graphs/components/GraphsToolbar";
@@ -28,7 +28,7 @@ import { selectedPoint } from "./graphs/lib/scatter";
 export function Graphs() {
   const { t } = useTranslation("graphs");
   const { snapshot, analysis, visible } = useData();
-  const analyzing = useAnalyzing();
+  const analyzing = useBusy();
   const state = useAppStore(
     useShallow((s) => ({
       mode: s.ui.mode,

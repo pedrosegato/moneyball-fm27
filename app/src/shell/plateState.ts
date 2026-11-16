@@ -1,11 +1,10 @@
 import { i18n } from "@/i18n";
 import type { DataState } from "@/store/data";
-import { progressLabel } from "./progress";
 
-export type PlateInput = Pick<DataState, "snapshot" | "status" | "gameDate" | "loading" | "progress" | "error">;
+export type PlateInput = Pick<DataState, "snapshot" | "status" | "gameDate" | "loading" | "error">;
 
 export type PlateState =
-  | { tone: "working"; label: string }
+  | { tone: "working"; label?: undefined }
   | { tone: "live" | "idle"; label: string }
   | { tone: "danger"; label: string; detail?: string }
   | { tone: "stale"; label: string; dataDate: string; gameDate: string };
@@ -15,10 +14,9 @@ export type ProblemState = Extract<PlateState, { tone: "danger" | "stale" }>;
 export const isProblem = (state: PlateState): state is ProblemState =>
   state.tone === "danger" || state.tone === "stale";
 
-export function plateState({ snapshot, status, gameDate, loading, progress, error }: PlateInput): PlateState {
+export function plateState({ snapshot, status, gameDate, loading, error }: PlateInput): PlateState {
   const dataDate = snapshot?.date ?? null;
-  if (loading) return { tone: "working", label: progressLabel(progress) };
-  if (status?.busy) return { tone: "working", label: i18n.t("progress.default", { ns: "shell" }) };
+  if (loading || status?.busy) return { tone: "working" };
   if (status?.build_known === false) {
     return {
       tone: "danger",

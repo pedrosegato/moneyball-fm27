@@ -1,7 +1,7 @@
-import { useAnalyzing } from "@/store/useData";
+import { useBusy } from "@/store/useData";
 
 export function TableBusyBar() {
-  const analyzing = useAnalyzing();
+  const analyzing = useBusy();
   if (!analyzing) return null;
   return (
     <div aria-hidden className="pointer-events-none absolute inset-x-0 -bottom-px h-0.5 overflow-hidden">

@@ -96,7 +96,7 @@ describe("StatusBar", () => {
     expect(appStore.getState().data.analysis).toBe(analysis);
   });
 
-  it("reads a busy status as the game being read, never as closed", async () => {
+  it("reads a busy status as the game being read, never as closed, and keeps the club and date", async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     const data = startData();
     renderWithData(<StatusBar />, data.controller);
@@ -105,7 +105,8 @@ describe("StatusBar", () => {
     data.setStatus({ ok: false, busy: true });
     await act(() => vi.advanceTimersByTimeAsync(5_000));
 
-    expect(summary()).toHaveTextContent("Lendo o jogo…");
+    expect(summary()).toHaveTextContent("MFC");
+    expect(summary()).not.toHaveTextContent("Lendo");
     expect(within(plate()).queryByRole("alert")).toBeNull();
   });
 
@@ -147,7 +148,7 @@ describe("StatusBar", () => {
     expect(within(plate()).queryByText("Sem uid")).toBeNull();
   });
 
-  it("shows the reader's progress while the players load, with the refresh icon spinning", async () => {
+  it("shows no loading text or spinning icon in the header while the players load", async () => {
     const fake = fakeSource();
     fake.source.loadPlayers.mockImplementation((_scope, _rescan, onProgress) => {
       onProgress?.({ phase: "read", done: 22_000, total: 44_000 });
@@ -155,8 +156,9 @@ describe("StatusBar", () => {
     });
     const { controller } = startData(fake);
     renderWithData(<StatusBar />, controller);
-    await vi.waitFor(() => expect(summary()).toHaveTextContent("Lendo jogadores (50%)"));
-    expect(reload().querySelector("svg")).toHaveClass("animate-spin");
+    await vi.waitFor(() => expect(reload()).toHaveAttribute("aria-disabled", "true"));
+    expect(summary()).not.toHaveTextContent("Lendo");
+    expect(reload().querySelector("svg")).not.toHaveClass("animate-spin");
   });
 
   it("shows a failed load, with the reason one focus away, while keeping the data", async () => {

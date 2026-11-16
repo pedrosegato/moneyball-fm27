@@ -30,18 +30,18 @@ async function started() {
 describe("PeriodFilter", () => {
   afterEach(resetApp);
 
-  it("marks the button busy while the new period is calculated and clears it when the analysis arrives", async () => {
+  it("names the new period at once and leaves the wait to the table", async () => {
     const user = userEvent.setup();
     const engine = await started();
-    const trigger = screen.getByRole("button", { name: /^Período: Esta temporada/ });
-    expect(trigger).not.toHaveAttribute("aria-busy", "true");
-    await user.click(trigger);
+    await user.click(screen.getByRole("button", { name: /^Período: Esta temporada/ }));
     await user.click(await screen.findByRole("menuitemradio", { name: "Últimos 30 jogos" }));
     const switching = screen.getByRole("button", { name: /^Período: Últimos 30 jogos/ });
-    expect(switching).toHaveAttribute("aria-busy", "true");
     await vi.waitFor(() => expect(engine.calls).toHaveLength(2));
+    expect(appStore.getState().data.analyzing).toBe(true);
+    expect(switching).not.toHaveAttribute("aria-busy");
+    expect(switching.querySelectorAll("svg")).toHaveLength(1);
     engine.calls[1].resolve();
-    await vi.waitFor(() => expect(switching).toHaveAttribute("aria-busy", "false"));
+    await vi.waitFor(() => expect(appStore.getState().data.analyzing).toBe(false));
   });
 
   it("keeps the shown numbers on the old period until the analysis for the new one arrives", async () => {

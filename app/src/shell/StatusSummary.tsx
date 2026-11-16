@@ -14,8 +14,7 @@ interface StatusSummaryProps {
 }
 
 function summaryContent(state: PlateState, snapshot: DataState["snapshot"]): ReactNode {
-  if (state.tone === "working" || (state.tone === "idle" && !snapshot))
-    return <span className="truncate">{state.label}</span>;
+  if (state.tone === "idle" && !snapshot) return <span className="truncate">{state.label}</span>;
   const club = snapshot ? (myClub(snapshot)?.name ?? null) : null;
   const date = snapshot?.date ? formatDate(snapshot.date) : null;
   return club || date ? <ClubAndDate club={club} date={date} /> : null;

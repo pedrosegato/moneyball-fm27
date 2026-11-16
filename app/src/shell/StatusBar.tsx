@@ -17,7 +17,6 @@ export function StatusBar() {
       status: d.status,
       gameDate: d.gameDate,
       loading: d.loading,
-      progress: d.progress,
       error: d.error,
       readAt: d.readAt,
     })),
@@ -38,7 +37,7 @@ export function StatusBar() {
     <fieldset aria-label={t("status.label")} className="flex min-w-0 items-center gap-1.5">
       {isProblem(state) && <ProblemStrip key={state.tone} state={state} onReload={onReload} />}
       <StatusSummary state={state} snapshot={data.snapshot} details={details} />
-      <ReloadButton loading={data.loading} onReload={onReload} />
+      <ReloadButton disabled={data.loading} onReload={onReload} />
     </fieldset>
   );
 }

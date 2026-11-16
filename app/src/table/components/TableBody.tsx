@@ -8,7 +8,7 @@ import type { ColumnFiltering, HeaderMenuActions } from "@/filters/lib/headerMen
 import type { HeaderMenuHandle } from "@/filters/lib/headerMenuHandle";
 import { cn } from "@/lib/utils";
 import type { ValueMode } from "@/store/ui";
-import { useAnalyzing } from "@/store/useData";
+import { useBusy } from "@/store/useData";
 import type { TableColumn } from "../columns/types";
 import { useColumnWindow } from "../hooks/useColumnWindow";
 import { useHeaderKeys } from "../hooks/useHeaderKeys";
@@ -68,7 +68,7 @@ export function TableBody({
   empty,
 }: TableBodyProps) {
   const { t } = useTranslation("table");
-  const analyzing = useAnalyzing();
+  const analyzing = useBusy();
   const scrollerRef = useRef<HTMLDivElement>(null);
   const bodyRef = useRef<HTMLTableSectionElement>(null);
 

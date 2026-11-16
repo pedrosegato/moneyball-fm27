@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import type { DataController } from "./controller";
 import { appStore } from "./index";
 import { testSnapshot } from "./testing";
-import { DataControllerContext, useAnalyzing, useData, useLoadProgress } from "./useData";
+import { DataControllerContext, useBusy, useData, useLoadProgress } from "./useData";
 
 const controller: DataController = {
   start: () => {},
@@ -43,11 +43,16 @@ describe("useData", () => {
     expect(renders).toBe(before);
   });
 
-  it("leaves loading and progress to useLoadProgress, analysing to useAnalyzing", () => {
+  it("leaves loading and progress to useLoadProgress, and is busy while the game is read or analysed", () => {
     const progress = renderHook(() => useLoadProgress());
-    const analyzing = renderHook(() => useAnalyzing());
-    act(() => appStore.getState().setData({ loading: true, progress: { phase: "scan" }, analyzing: true }));
+    const busy = renderHook(() => useBusy());
+    expect(busy.result.current).toBe(false);
+    act(() => appStore.getState().setData({ loading: true, progress: { phase: "scan" } }));
     expect(progress.result.current).toEqual({ loading: true, progress: { phase: "scan" } });
-    expect(analyzing.result.current).toBe(true);
+    expect(busy.result.current).toBe(true);
+    act(() => appStore.getState().setData({ loading: false, progress: null, analyzing: true }));
+    expect(busy.result.current).toBe(true);
+    act(() => appStore.getState().setData({ analyzing: false }));
+    expect(busy.result.current).toBe(false);
   });
 });

@@ -30,10 +30,6 @@ export function useLoadProgress() {
   return useAppStore(useShallow(({ data: d }) => ({ loading: d.loading, progress: d.progress })));
 }
 
-export function useAnalyzing(): boolean {
-  return useAppStore((s) => s.data.analyzing);
-}
-
-export function usePeriodPending(): boolean {
-  return useAppStore(({ data, ui }) => data.analysis !== null && data.analysis.period !== ui.period);
+export function useBusy(): boolean {
+  return useAppStore((s) => s.data.loading || s.data.analyzing);
 }
