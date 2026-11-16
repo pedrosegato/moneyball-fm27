@@ -20,7 +20,7 @@ use super::positions::position_string;
 use super::profile::*;
 use super::record::{ClubFinances, ClubRef, Keeper, PastSeason, PlayerRecord, Record, Season};
 use super::tactic::{
-    assemble, decode_slots, is_squad_lineup, lineup, squad_players, tactic_list, text_pointers,
+    active_tactic, assemble, decode_slots, is_squad_lineup, lineup, squad_players, text_pointers,
     Tactic, ARRAY_SIZE, PREPARED_TACTICS_CLASS, TACTIC_SIZE,
 };
 use crate::build::{engine_build, writable_sections, Build};
@@ -786,7 +786,7 @@ impl Game {
         ids: &[Option<u32>],
         squad: &HashMap<u32, u32>,
     ) -> Option<Tactic> {
-        let object = nonzero(self.mem.ptr(tactic_list(array)?))?;
+        let object = nonzero(self.mem.ptr(active_tactic(array)?))?;
         let bytes = self.mem.read(object, TACTIC_SIZE)?;
         let pairs = decode_slots(&bytes)?;
         let (name, style) = text_pointers(&bytes);

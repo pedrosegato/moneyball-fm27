@@ -220,14 +220,22 @@ impl World {
     }
 
     fn prepared(&mut self, tactic: Option<u64>, lineup: &[i32; 23]) -> u64 {
+        let tactics: Vec<u64> = tactic.into_iter().collect();
+        self.prepared_list(&tactics, 0, lineup)
+    }
+
+    fn prepared_list(&mut self, tactics: &[u64], active: u8, lineup: &[i32; 23]) -> u64 {
         let a = self.alloc(ARRAY_SIZE);
         self.u64(a, PREPARED_VT);
-        if let Some(t) = tactic {
-            let list = self.alloc(8);
-            self.u64(list, t);
+        if !tactics.is_empty() {
+            let list = self.alloc(8 * tactics.len());
+            for (i, &t) in tactics.iter().enumerate() {
+                self.u64(list + 8 * i as u64, t);
+            }
             self.u64(a + 0x08, list);
-            self.u64(a + 0x10, list + 8);
+            self.u64(a + 0x10, list + 8 * tactics.len() as u64);
         }
+        self.put(a + 0x20, &[active]);
         for (i, id) in lineup.iter().enumerate() {
             self.put(a + 0x28 + 4 * i as u64, &id.to_le_bytes());
         }
@@ -1581,6 +1589,27 @@ fn the_tactic_is_the_prepared_lineup_made_of_the_human_squad() {
             jose_aldo.oop.role_id.as_str()
         ),
         ("ip:17", "oop:28")
+    );
+}
+
+#[test]
+fn the_tactic_is_the_one_picked_for_the_next_match_among_the_clubs_tactics() {
+    let first = |active: u8| {
+        let mut w = World::fm27();
+        mfc_with_squad(&mut w);
+        let other = w.tactic_object("4-3-3 Com Extremos Cauteloso - Contra-Ataque Directo", None);
+        let mine = w.tactic_object(MINE, None);
+        w.prepared_list(&[other, mine], active, &squad_lineup());
+        tactic_after_read(&w).unwrap().name
+    };
+    assert_eq!(first(1), MINE);
+    assert_eq!(
+        first(0),
+        "4-3-3 Com Extremos Cauteloso - Contra-Ataque Directo"
+    );
+    assert_eq!(
+        first(7),
+        "4-3-3 Com Extremos Cauteloso - Contra-Ataque Directo"
     );
 }
 

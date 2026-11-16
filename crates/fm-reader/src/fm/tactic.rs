@@ -19,6 +19,7 @@ const NAME_POINTER: usize = 0x778;
 const STYLE_POINTER: usize = 0xF8;
 const LIST_START: usize = 0x08;
 const LIST_END: usize = 0x10;
+const ACTIVE_INDEX: usize = 0x20;
 const LINEUP_AT: usize = 0x28;
 
 const POSITION_BITS: u32 = 0x7FFF;
@@ -134,10 +135,15 @@ pub fn text_pointers(tactic: &[u8]) -> (u64, u64) {
     )
 }
 
-pub fn tactic_list(array: &[u8]) -> Option<u64> {
+pub fn active_tactic(array: &[u8]) -> Option<u64> {
     let start = u64_at(array, LIST_START)?;
     let end = u64_at(array, LIST_END)?;
-    (start != 0 && end > start).then_some(start)
+    if start == 0 || end <= start {
+        return None;
+    }
+    let count = (end - start) / 8;
+    let index = u64::from(*array.get(ACTIVE_INDEX)?);
+    Some(start + 8 * if index < count { index } else { 0 })
 }
 
 pub fn lineup(array: &[u8]) -> Vec<Option<u32>> {
