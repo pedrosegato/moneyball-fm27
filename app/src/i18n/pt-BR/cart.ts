@@ -1,0 +1,177 @@
+export const cart = {
+  view: "Vista",
+  clearSettled: "Limpar concluídos",
+  clearSettledHint: "Tira do carrinho o que o jogo já mostra contratado ou vendido",
+  empty: {
+    title: "Carrinho vazio",
+    description:
+      "Selecione jogadores em qualquer tabela e use Adicionar ao carrinho (ou Vender, para os do seu clube) na barra que aparece embaixo. A verba ao lado já pode ser definida.",
+    openShortlist: "Abrir a Shortlist",
+  },
+  aside: "Verba e vagas",
+  noClub:
+    "O save não indicou o seu clube: a verba digitada fica guardada por clube, então não há onde guardá-la. Recarregue com o save do seu clube aberto.",
+  typedNote:
+    "Digite o que o jogo mostra agora; fica salvo neste save. Contratação já feita sai da verba do jogo e deixa de contar aqui.",
+  slots: {
+    title: "Vagas",
+    target: "Contratações",
+    targetName: "Contratações planejadas na janela",
+    targetHint: "Quantos jogadores você ainda quer trazer nesta janela, contando as compras previstas no carrinho",
+    none: "Nenhuma vaga restante: suba as contratações para ver quanto sobra por vaga.",
+    left_one: "{{count, count}} vaga restante",
+    left_many: "{{count, count}} vagas restantes",
+    left_other: "{{count, count}} vagas restantes",
+    noBudget: "{{left}}. Defina a verba para ver quanto sobra por vaga",
+    spent: "{{left}}. A verba já acabou",
+    perSlot: "{{left}}, {{amount}} por vaga",
+  },
+  table: {
+    move: "Movimento",
+    buys: "Compras",
+    sales: "Vendas",
+    removeHint_one: "Tirar este movimento do carrinho",
+    removeHint_many: "Tirar os {{count, count}} movimentos do carrinho",
+    removeHint_other: "Tirar os {{count, count}} movimentos do carrinho",
+    empty: "Nenhum movimento do carrinho está no save lido.",
+    missing_one: "{{name}} não está no save lido: aposentado ou fora do que o leitor leu, e fica fora da conta.",
+    missing_many: "{{count, count}} jogadores do carrinho não estão no save lido ({{listed}}): ficam fora da conta.",
+    missing_other: "{{count, count}} jogadores do carrinho não estão no save lido ({{listed}}): ficam fora da conta.",
+    andMore: "{{names}} e mais {{rest, count}}",
+  },
+  missingNote: "Fora do save",
+  status: {
+    planned: {
+      label: "Previsto",
+      hint: "Ainda não aconteceu no jogo: conta na verba",
+    },
+    signed: {
+      label: "Contratado",
+      hint: "O jogo já mostra o jogador no clube: a verba e a folha do jogo já contam com ele",
+    },
+    sold: {
+      label: "Vendido",
+      hint: "O jogo já mostra o jogador fora do clube: a verba e a folha do jogo já contam com a saída",
+    },
+    unavailable: {
+      label: "Indisponível",
+      hint: "Ele não está no save lido (aposentado ou fora do que o leitor leu): fica fora da conta",
+    },
+  },
+  kind: {
+    buy: "Compra",
+    sell: "Venda",
+  },
+  caption: {
+    currentClub: "Clube atual: {{club}}",
+    inSquad: "Já no elenco",
+  },
+  columns: {
+    kind: {
+      abbr: "Movimento",
+      label: "Compra ou venda",
+      description: "se o jogador entra no carrinho como compra (vem para o clube) ou como venda (sai do clube).",
+    },
+    status: {
+      abbr: "Situação",
+      label: "Situação no jogo",
+      description:
+        "se o movimento ainda está previsto (conta na verba) ou se o jogo já mostra a contratação ou a venda feita.",
+    },
+    fee: {
+      abbr: "Taxa",
+      label: "Taxa prevista",
+      description:
+        "quanto a compra custa ou a venda rende na conta do carrinho; comece pelo valor de mercado e ajuste.",
+      name: "Taxa de {{who}}",
+    },
+    wage: {
+      abbr: "Salário{{suffix}}",
+      label: "Salário {{period}} na conta",
+      description: "o salário {{period}} que a compra acrescenta à folha, ou que a venda libera.",
+      name: "Salário {{adjective}} de {{who}}",
+    },
+    settled: "Fora da conta",
+  },
+  shortlistPage: {
+    missing_one: "{{count, count}} jogador desta pasta não está no save lido: aposentado ou fora do que o leitor leu.",
+    missing_many:
+      "{{count, count}} jogadores desta pasta não estão no save lido: aposentados ou fora do que o leitor leu.",
+    missing_other:
+      "{{count, count}} jogadores desta pasta não estão no save lido: aposentados ou fora do que o leitor leu.",
+    moveToFolder: "Mover para pasta",
+    moveBlocked: "Crie outra pasta para mover jogadores para ela.",
+    moveTo: "Mover para",
+    remove: "Tirar da pasta",
+    removeHint_one: "Tirar este jogador desta pasta",
+    removeHint_many: "Tirar os {{count, count}} desta pasta",
+    removeHint_other: "Tirar os {{count, count}} desta pasta",
+    allMissing: "Ninguém desta pasta está no save lido.",
+    empty:
+      "Nenhum jogador nesta pasta. Selecione jogadores em qualquer tabela e use Shortlist na barra que aparece embaixo.",
+  },
+  folders: {
+    namePlaceholder: "Nome da pasta",
+    rename: "Novo nome da pasta {{name}}",
+    newName: "Nome da nova pasta",
+    item: "{{name}}, {{players}}",
+    actions: "Ações da pasta {{name}}",
+    renameAction: "Renomear",
+    delete: "Excluir",
+    lastFolder: "A última pasta fica: o botão Shortlist do painel guarda nela",
+    create: "Nova pasta",
+    deleteTitle: "Excluir a pasta {{name}}?",
+    leaving_zero: "{{count, count}} jogadores saem desta pasta. Quem também está em outra pasta continua lá.",
+    leaving_one: "{{count, count}} jogador sai desta pasta. Quem também está em outra pasta continua lá.",
+    leaving_many: "{{count, count}} jogadores saem desta pasta. Quem também está em outra pasta continua lá.",
+    leaving_other: "{{count, count}} jogadores saem desta pasta. Quem também está em outra pasta continua lá.",
+    deleteConfirm: "Excluir pasta",
+  },
+  budget: {
+    unknownLeft: "Restante —",
+    left: "Restante {{amount}}",
+    leftSpoken: "Restante {{amount}}, {{pct}}% {{whole}}",
+    fromGame: "Lido do jogo",
+    hint: "Lido do jogo (não verificado): {{amount}}",
+    hintTitle:
+      "O leitor achou este valor no save, mas a leitura ainda não foi conferida com a tela de Finanças do jogo",
+    use: "Usar",
+    useLabel: "{{label}}, {{amount}}",
+    typePlaceholder: "Digite",
+    transfers: {
+      title: "Transferências",
+      whole: "da verba",
+      over: "As compras passam da verba em {{amount}}. Nada fica bloqueado: ajuste uma taxa, tire alguém ou venda mais.",
+      budget: "Verba",
+      budgetName: "Verba de transferências",
+      use: "Usar a verba lida do jogo",
+      buys: "Compras",
+      sales: "Vendas",
+    },
+    wages: {
+      title: "Salários",
+      whole: "do teto",
+      unknown: "Folha atual ainda não lida",
+      over: "Os salários passam do teto em {{amount}} {{period}}. Nada fica bloqueado: negocie um salário menor ou libere outro.",
+      cap: "Teto {{period}}",
+      capName: "Teto salarial {{period}}",
+      use: "Usar o teto lido do jogo",
+      bill: "Folha atual",
+      billHint:
+        "Salários de quem tem contrato com o clube, emprestados a outros inclusos; quem chegou emprestado fica de fora",
+      newWages: "Novos salários",
+      released: "Liberados nas vendas",
+    },
+  },
+  moneyField: {
+    invalid: "Use um valor como {{example}}",
+  },
+  pitch: {
+    label: "Chegadas por posição",
+    arrivals_zero: "{{count, count}} chegadas",
+    arrivals_one: "{{count, count}} chegada",
+    arrivals_many: "{{count, count}} chegadas",
+    arrivals_other: "{{count, count}} chegadas",
+    note: "Conta cada posição natural (18+); quem ainda não tem uma conta na melhor.",
+  },
+} as const;
