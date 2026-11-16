@@ -1,0 +1,12 @@
+[package]
+name = "fm-reader-cli"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+fm-reader = { path = "../fm-reader" }
+clap = { version = "4", features = ["derive"] }
+serde_json = "1"
+
+[target.'cfg(windows)'.dependencies]
+memchr = "2"
