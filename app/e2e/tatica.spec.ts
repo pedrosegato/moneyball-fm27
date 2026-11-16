@@ -38,6 +38,7 @@ async function gameTactic(page: Page): Promise<GameTactic | null> {
     const load = (path: string) => import(path);
     const shape = await load("/src/engine/tacticShape.ts");
     const { roleById } = await load("/src/engine/roles/catalog.ts");
+    const { positionRating } = await load("/src/engine/positions.ts");
     const snapshot = await (await fetch("/__dev/snapshot")).json();
     if (!snapshot.tactic) return null;
     const slots = shape.shapeFromTactic(snapshot.tactic);
@@ -69,7 +70,7 @@ async function gameTactic(page: Page): Promise<GameTactic | null> {
       },
     );
     const stRating = Object.fromEntries(
-      starters.map((s: { uid: number }) => [s.uid, shape.positionRating(byUid.get(s.uid)!.pos, "ST")]),
+      starters.map((s: { uid: number }) => [s.uid, positionRating(byUid.get(s.uid)!.pos, "ST")]),
     );
     return { starters, stRating };
   });

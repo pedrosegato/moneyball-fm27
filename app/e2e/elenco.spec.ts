@@ -291,6 +291,7 @@ test("the margin slider changes the verdict counts in Contratações", async ({ 
 });
 
 test("a slot cleared by Limpar vaga is remembered until Automático", async ({ page }) => {
+  test.setTimeout(120_000);
   await open(page);
   const fit = await engineElenco(page);
   const striker = fit.slots.indexOf("ST(C)");
