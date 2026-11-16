@@ -1,6 +1,6 @@
 import { type Composite, rankedPercentileMean } from "../composites";
 import { percentiles } from "../percentiles";
-import { POS_GROUPS, type PosGroup } from "../positions";
+import { POS_GROUPS, type PosGroup, playsAny } from "../positions";
 import { ROLES, type RoleDef, roleGroups } from "./catalog";
 import { PROFILE_ITEMS } from "./items";
 
@@ -10,6 +10,7 @@ export interface RoleScoringInput {
   pool: Uint8Array;
   items: Readonly<Record<string, Float64Array>>;
   lowerIsBetter: ReadonlySet<string>;
+  ratings: readonly (readonly number[])[];
 }
 
 export type RoleScores = readonly Float32Array[];
@@ -31,9 +32,19 @@ export function rulerFor(role: RoleDef, groups: readonly PosGroup[], pool: Uint8
 }
 
 export function scoreRoles(input: RoleScoringInput, roles: readonly RoleDef[] = ROLES): RoleScores {
-  const { groups, isGk, pool, items, lowerIsBetter } = input;
+  const { groups, isGk, pool, items, lowerIsBetter, ratings } = input;
   const n = groups.length;
   const scores = new Map<RoleDef, Float32Array>();
+  const playable = new Map<string, Uint8Array>();
+  const playersOf = (role: RoleDef): Uint8Array => {
+    const key = role.positions.join("|");
+    let flags = playable.get(key);
+    if (!flags) {
+      flags = Uint8Array.from(ratings, (pos) => (playsAny(pos, role.positions) ? 1 : 0));
+      playable.set(key, flags);
+    }
+    return flags;
+  };
   const rulers = new Map<string, RoleDef[]>();
   for (const role of roles) {
     const key = rulerKey(role);
@@ -54,6 +65,7 @@ export function scoreRoles(input: RoleScoringInput, roles: readonly RoleDef[] = 
     );
     const pct = Object.fromEntries(keys.map((k, j) => [k, ranked[j]]));
     const cache = new Map<string, Float32Array>();
+    const shown = new Map<string, Float32Array>();
 
     for (const role of members) {
       const weights = roleWeights(role);
@@ -66,7 +78,14 @@ export function scoreRoles(input: RoleScoringInput, roles: readonly RoleDef[] = 
         out = Float32Array.from(raw, (p, i) => (isGk[i] === wantKeeper ? p : Number.NaN));
         cache.set(cacheKey, out);
       }
-      scores.set(role, out);
+      const shownKey = `${cacheKey}|${role.positions.join("|")}`;
+      let forRole = shown.get(shownKey);
+      if (!forRole) {
+        const plays = playersOf(role);
+        forRole = Float32Array.from(out, (p, i) => (plays[i] ? p : Number.NaN));
+        shown.set(shownKey, forRole);
+      }
+      scores.set(role, forRole);
     }
   }
   return roles.map((r) => scores.get(r) as Float32Array);

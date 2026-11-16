@@ -1,12 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { POS_NAMES } from "./positions";
+import { POS_NAMES, positionRating } from "./positions";
 import { FORMATIONS } from "./tacticalFit";
 import {
   engineSlots,
   FM_SPOTS,
   moveSlot,
   positionAt,
-  positionRating,
   rolesFor,
   type Spot,
   setSlotRole,

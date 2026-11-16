@@ -1,5 +1,5 @@
 import type { LineupSlot, Tactic, TacticSide, TacticSlot } from "@/data/types";
-import { POS_NAMES, type PosName, slotCode } from "./positions";
+import { type PosName, slotCode } from "./positions";
 import { ROLES, type RoleDef, type RoleId, type RolePhase, roleById } from "./roles/catalog";
 import { DEFAULT_FORMATION, FORMATIONS } from "./tacticalFit";
 
@@ -11,7 +11,6 @@ export interface Spot {
 type Placement = Pick<TacticSlot, "position" | "side">;
 
 export const SHAPE_SLOTS = 11;
-export const FIT_RATING = 15;
 
 const PHASES: readonly RolePhase[] = ["ip", "oop"];
 const SIDES: readonly TacticSide[] = ["L", "C", "R"];
@@ -217,6 +216,3 @@ export function setSlotRole(
 }
 
 export const tacticKey = (tactic: Tactic): string => JSON.stringify([tactic.name, tactic.slots]);
-
-export const positionRating = (pos: readonly number[], position: PosName): number =>
-  pos[POS_NAMES.indexOf(position)] ?? 0;

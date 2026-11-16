@@ -1,10 +1,13 @@
 import { describe, expect, it } from "vitest";
-import type { PosGroup } from "../positions";
+import { POS_NAMES, type PosGroup, type PosName } from "../positions";
 import { ROLES, roleById, roleIndex } from "./catalog";
 import { PROFILE_ITEMS, ROLE_ITEM_KEYS } from "./items";
 import { bestRoleInGroup, groupBest, type RoleScoringInput, roleWeights, scoreRoles } from "./score";
 
 const role = (id: string) => roleById(id)!;
+
+const rated = (ratings: Partial<Record<PosName, number>>) => POS_NAMES.map((name) => ratings[name] ?? 1);
+const NATURAL: Partial<Record<PosGroup, PosName>> = { ZAG: "DC", VOL: "DM", GK: "GK" };
 
 interface Build {
   cbs?: number;
@@ -33,6 +36,7 @@ function population({ cbs = 25, dms = 0, keepers = 0, dmBase = 100 }: Build): Ro
     pool: new Uint8Array(n).fill(1),
     items,
     lowerIsBetter,
+    ratings: groups.map((g) => rated({ [NATURAL[g] ?? "DC"]: 20 })),
   };
 }
 
@@ -61,7 +65,8 @@ describe("scoreRoles", () => {
     const alone = population({ cbs: 25 });
     const before = cbScores(alone, "ip:1");
     expect(Math.max(...before)).toBeGreaterThanOrEqual(95);
-    const mixed = population({ cbs: 25, dms: 10 });
+    const built = population({ cbs: 25, dms: 10 });
+    const mixed = { ...built, ratings: built.ratings.map((r, i) => (i < 25 ? r : rated({ DM: 20, DC: 15 }))) };
     expect(cbScores(mixed, "ip:1")).toEqual(before);
     const dmScores = Array.from(scoreRoles(mixed)[roleIndex("ip:1")]).slice(25);
     expect(dmScores.every((v) => Number.isFinite(v) && v >= 95)).toBe(true);
@@ -117,5 +122,20 @@ describe("groupBest", () => {
     const scores = scoreRoles(population({ cbs: 25 }));
     expect(Number.isNaN(groupBest(scores).GK[0])).toBe(true);
     expect(bestRoleInGroup(scores, "GK", 0)).toBe(-1);
+  });
+});
+
+describe("who gets a role score", () => {
+  it("scores a role only for players rated 15 or more in one of its positions, or in their own best positions", () => {
+    const input = population({ cbs: 25, dms: 3 });
+    const ratings = [...input.ratings];
+    ratings[0] = rated({ DC: 12 });
+    ratings[25] = rated({ DM: 20, DC: 15 });
+    ratings[26] = rated({ DM: 20, DC: 14 });
+    const centreBack = scoreRoles({ ...input, ratings })[roleIndex("ip:1")];
+    expect(centreBack[0]).not.toBeNaN();
+    expect(centreBack[25]).not.toBeNaN();
+    expect(centreBack[26]).toBeNaN();
+    expect(centreBack[27]).toBeNaN();
   });
 });

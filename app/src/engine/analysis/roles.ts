@@ -42,7 +42,14 @@ export function roleScoringInput(prepared: PreparedSnapshot, poolMinutes: number
     ...ROLE_ITEMS.filter((item) => item.lowerIsBetter).map((item) => item.key),
     ...PDF_KEYS.filter((key) => STATS[statIndex(key)].lowerIsBetter),
   ]);
-  return { groups, isGk: keeperFlags(records), pool: poolFlags(records, poolMinutes), items, lowerIsBetter };
+  return {
+    groups,
+    isGk: keeperFlags(records),
+    pool: poolFlags(records, poolMinutes),
+    items,
+    lowerIsBetter,
+    ratings: records.map((r) => r.pos),
+  };
 }
 
 export function viewRoles(

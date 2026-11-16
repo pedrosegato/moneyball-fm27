@@ -24,6 +24,16 @@ export const POS_NAMES = [
 ] as const;
 export type PosName = (typeof POS_NAMES)[number];
 
+export const FIT_RATING = 15;
+
+export const positionRating = (pos: readonly number[], position: PosName): number =>
+  pos[POS_NAMES.indexOf(position)] ?? 0;
+
+export function playsAny(pos: readonly number[], positions: readonly PosName[]): boolean {
+  const needed = Math.min(FIT_RATING, Math.max(0, ...pos));
+  return positions.some((position) => positionRating(pos, position) >= needed);
+}
+
 const GROUP_OF: Record<PosName, PosGroup> = {
   GK: "GK",
   SW: "ZAG",

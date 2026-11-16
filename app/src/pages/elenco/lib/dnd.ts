@@ -1,16 +1,8 @@
 import type { Active } from "@dnd-kit/core";
 import type { PlayerRecord } from "@/data/types";
-import type { PosName } from "@/engine/positions";
+import { FIT_RATING, type PosName, positionRating } from "@/engine/positions";
 import type { RolePhase } from "@/engine/roles/catalog";
-import {
-  FIT_RATING,
-  FM_SPOTS,
-  moveSlot,
-  positionRating,
-  type ShapeSlot,
-  type Spot,
-  sameSpot,
-} from "@/engine/tacticShape";
+import { FM_SPOTS, moveSlot, type ShapeSlot, type Spot, sameSpot } from "@/engine/tacticShape";
 import { clearSlot, type EditableLineup, type Picks, placePlayer, swapSlots } from "./lineupEdits";
 import { freeSpots, layoutSpots } from "./pitchView";
 
