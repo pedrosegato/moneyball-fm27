@@ -1,5 +1,5 @@
-# moneyball-fm27
+# Moneyball FM27
 
-Ferramenta de scouting no estilo Moneyball para o Football Manager 27. Lê o jogo aberto, sem mexer nele, e compara cada jogador com quem joga na mesma posição.
+Moneyball-style scouting for Football Manager 27. It reads your save straight from the running game, without touching it, and rates every player against others in the same position.
 
-Começou como um fork do [FMMT-27](https://github.com/fmoreoo/FMMT-27), de fmoreoo, e foi reescrita como app de desktop.
+Started as a fork of [FMMT-27](https://github.com/fmoreoo/FMMT-27) by fmoreoo and was rewritten as a desktop app.
